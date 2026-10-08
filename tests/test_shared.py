@@ -1,8 +1,8 @@
 """Tests for shared/: the page both sites are built on, and the alerts. Run from the repo's top folder with:
 python3 -m unittest"""
 
-import json
 import importlib
+import json
 import os
 import re
 import shutil

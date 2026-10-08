@@ -1023,7 +1023,8 @@ options after its name, when you add it or in feeds.txt:</p>
 <p><a href="feeds.opml" download>Download these sites as OPML</a>, the file format other feed readers import.
 The current list of posts is also available as <a href="posts.json">JSON</a>.</p>
 
-<footer><p>Updated {render_time(built_at, "updated")} · <a href="./">Back to the news</a></p></footer>
+<footer><p>Updated {render_time(built_at, "updated")} · <a href="./">Back to the news</a> ·
+<a href="make-your-own.html">Make your own newsfeed</a></p></footer>
 <script>
   document.querySelector(".add-site").addEventListener("submit", event => {{
     event.preventDefault();
@@ -1035,6 +1036,82 @@ The current list of posts is also available as <a href="posts.json">JSON</a>.</p
   }});
 </script>"""
     return page("Sources", body)
+
+
+TEMPLATE_REPO = "https://github.com/grahamhagenah/newsfeed"
+
+
+def render_guide(built_at):
+    """Make your own: how someone else sets up a newsfeed of their own from the template, which is this
+    newsfeed's code on its own. Written for someone who has never used GitHub."""
+    body = f"""<h1>Make your own</h1>
+<p class="lead">This page is a list of the latest posts from the sites I follow. You can have one of your own,
+with your own sites, in about ten minutes. It costs nothing, there\u2019s nothing to install, and nothing to keep
+running: GitHub builds the page every so often and publishes it for you.</p>
+<p>You need a <a href="https://github.com/signup">GitHub account</a>, which is free. You don\u2019t need to know how
+to code \u2014 your list of sites is one line per site in a text file.</p>
+
+<h1>Set it up</h1>
+<ol>
+<li><strong>Make your copy.</strong> Open <a href="{TEMPLATE_REPO}">the newsfeed template</a> and press the green
+<strong>Use this template</strong> button, then <strong>Create a new repository</strong>. Give it a name
+(<code>newsfeed</code> is a fine one), leave it <strong>Public</strong>, and press <strong>Create</strong>.
+Public is what makes the page free to publish; the only thing in it is your list of sites.</li>
+<li><strong>Turn on publishing.</strong> In your new repository, go to <strong>Settings</strong> \u2192
+<strong>Pages</strong>, and under <strong>Source</strong> choose <strong>GitHub Actions</strong>.</li>
+<li><strong>Turn on the builds.</strong> Go to the <strong>Actions</strong> tab and press the button that
+enables workflows. Choose <strong>Build and deploy</strong> on the left, then <strong>Run workflow</strong>.</li>
+<li><strong>Open your page.</strong> A minute or so later it\u2019s at
+<code>https://&lt;your username&gt;.github.io/&lt;your repository&gt;/</code>. It starts with a handful of sites
+so there\u2019s something to look at.</li>
+</ol>
+
+<h1>Add your own sites</h1>
+<p>Your page has its own <strong>Add or remove sites</strong> page, the same as
+<a href="sources.html">this one</a>. Paste a site\u2019s address, press Add, and press Create on the GitHub page
+that opens: a minute later it\u2019s on your page. Removing one works the same way.</p>
+<p>Or edit the list directly: <code>news/feeds.txt</code> in your repository, one site per line.</p>
+<ul class="options">
+<li><strong>Any site with a feed:</strong> paste its home page, like <code>https://kottke.org/</code>. The build
+finds the feed itself. Most news sites and blogs have one.</li>
+<li><strong>YouTube channels:</strong> paste the channel\u2019s page. Its videos play on your page, in a small
+window you can drag around, and Shorts are left out.</li>
+<li><strong>Podcasts:</strong> paste the show\u2019s feed, and its episodes open in Apple Podcasts.</li>
+</ul>
+<p>Anything after the address is the name to show, and then options:</p>
+<ul class="options">
+<li><code>limit=5</code> \u2014 at most 5 posts from that site, for one that posts constantly.</li>
+<li><code>days=14</code> \u2014 keep its posts for 14 days, for a blog that posts rarely. The usual is {DAYS_TO_KEEP}.</li>
+<li><code>only="Full Performance"</code> \u2014 only posts whose titles have that in them.</li>
+</ul>
+<p>So a line can be as plain as <code>https://waxy.org/</code> or as fussy as
+<code>https://www.nytimes.com/ The New York Times limit=8</code>.</p>
+
+<h1>How often it updates</h1>
+<p>The build is set to run every 15 minutes, but GitHub treats scheduled builds as a favour rather than a
+promise and skips most of them \u2014 often nine in ten \u2014 so your page can sit a few hours out of date. Two ways
+around it:</p>
+<ul class="options">
+<li><strong>Press the button.</strong> <strong>Actions</strong> \u2192 <strong>Build and deploy</strong> \u2192
+<strong>Run workflow</strong> updates it at once.</li>
+<li><strong>Have something else start it.</strong> A free account at <a href="https://cron-job.org">cron-job.org</a>
+can ask GitHub to build every 15 minutes, which is what keeps this page current. The
+<a href="{TEMPLATE_REPO}#how-often-it-updates">template\u2019s README</a> has the exact settings.</li>
+</ul>
+
+<h1>If something looks wrong</h1>
+<ul class="options">
+<li><strong>A site you added isn\u2019t there.</strong> It may not publish a feed. Look for an RSS or Atom link on
+the site and paste that address instead.</li>
+<li><strong>A site says \u201ccouldn\u2019t load\u201d.</strong> Its posts from the last good build keep showing for two
+days. Some sites turn away anything that isn\u2019t a person with a browser; those can\u2019t be read.</li>
+<li><strong>Nothing updates at all.</strong> Check the <strong>Actions</strong> tab for a red build and open it
+to see what failed.</li>
+</ul>
+
+<footer><p>Updated {render_time(built_at, "updated")} \u00b7 <a href="./">Back to the news</a> \u00b7
+<a href="sources.html">Add or remove sites</a></p></footer>"""
+    return page("Make your own", body)
 
 
 def render_opml(feeds, built_at):
@@ -1292,6 +1369,7 @@ def main():
     (OUT_DIR / "index.html").write_text(render_index(feeds, posts, failed, stale, built_at))
     (OUT_DIR / "posts.json").write_text(render_json(posts, built_at))
     (OUT_DIR / "sources.html").write_text(render_sources(feeds, built_at))
+    (OUT_DIR / "make-your-own.html").write_text(render_guide(built_at))
     (OUT_DIR / "feeds.opml").write_text(render_opml(feeds, built_at))
     record = {
         "built": built_at.isoformat(),
@@ -1302,7 +1380,8 @@ def main():
         "failing": still_failing(errors, previous, built_at),
     }
     (OUT_DIR / "feeds.json").write_text(json.dumps(record, ensure_ascii=False))
-    print(f"Wrote {OUT_DIR.relative_to(ROOT.parent)}/index.html, posts.json, sources.html, feeds.opml and feeds.json")
+    print(f"Wrote {OUT_DIR.relative_to(ROOT.parent)}/index.html, posts.json, sources.html, make-your-own.html, "
+          "feeds.opml and feeds.json")
 
 
 if __name__ == "__main__":

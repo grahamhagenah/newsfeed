@@ -36,9 +36,27 @@ Apple Podcasts.
 ## How often it updates
 
 Every 15 minutes, in theory. In practice GitHub runs only a fraction of scheduled builds — often fewer than
-one in ten — so the page can go a few hours stale. The README of the original explains how to have a free
-cron service start the builds instead, which makes it reliable. Until then, **Actions → Build and deploy →
-Run workflow** updates it at once.
+one in ten — so the page can go a few hours stale. **Actions → Build and deploy → Run workflow** updates it
+at once.
+
+To make it reliable, have something else start the build. A free account at [cron-job.org](https://cron-job.org)
+does it in about ten minutes:
+
+1. **Make a token.** At [github.com/settings/personal-access-tokens](https://github.com/settings/personal-access-tokens),
+   generate a fine-grained token. Under **Repository access** choose **Only select repositories** and pick this
+   repo; under **Permissions → Repository permissions** set **Actions** to **Read and write**. Nothing else.
+   Copy the token: it can start builds of this one repo and do nothing else.
+2. **Make the job.** In cron-job.org, **Create cronjob**:
+   - **URL:** `https://api.github.com/repos/<you>/<your repo>/actions/workflows/deploy.yml/dispatches`
+   - **Schedule:** every 15 minutes.
+   - On the **Advanced** tab, **Request method** `POST`, **Request body** `{"ref":"main"}`, and these headers:
+     `Authorization: Bearer <your token>`, `Accept: application/vnd.github+json`,
+     `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json`, `User-Agent: cron-job.org`.
+   - Turn on its email for failures.
+3. **Test run** should answer **204**. A 401 means the token was pasted wrong; a 403 usually means the Actions
+   permission or the `User-Agent` header is missing.
+
+The token expires on the date you chose; renew it then and paste the new one into the job.
 
 ## Running it on your own computer
 
