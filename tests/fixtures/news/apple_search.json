@@ -1,0 +1,21 @@
+{
+ "resultCount": 2,
+ "results": [
+  {
+   "wrapperType": "track",
+   "kind": "podcast",
+   "collectionId": 1417996875,
+   "collectionName": "The Big Picture Show",
+   "feedUrl": "https://feeds.megaphone.fm/some-other-show",
+   "collectionViewUrl": "https://podcasts.apple.com/us/podcast/the-big-picture-show/id1417996875"
+  },
+  {
+   "wrapperType": "track",
+   "kind": "podcast",
+   "collectionId": 1080911743,
+   "collectionName": "The Big Picture",
+   "feedUrl": "https://feeds.megaphone.fm/the-big-picture",
+   "collectionViewUrl": "https://podcasts.apple.com/us/podcast/the-big-picture/id1080911743"
+  }
+ ]
+}

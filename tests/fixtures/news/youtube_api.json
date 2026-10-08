@@ -1,0 +1,83 @@
+{
+ "kind": "youtube#playlistItemListResponse",
+ "etag": "x",
+ "nextPageToken": "EAAaBlBUOkNBVQ",
+ "items": [
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "x",
+   "id": "UExVdQw4w9WgXcQ",
+   "snippet": {
+    "publishedAt": "2026-09-09T15:00:06Z",
+    "channelId": "UC4eYXhJI4-7wSWc8UNRwD4A",
+    "title": "Tori Kelly: Tiny Desk Concert",
+    "description": "Tori Kelly sings from her new album.\n\nSET LIST\n\"Missin' You\"",
+    "channelTitle": "NPR Music",
+    "playlistId": "UULF4eYXhJI4-7wSWc8UNRwD4A",
+    "position": 0,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "dQw4w9WgXcQ"
+    },
+    "videoOwnerChannelTitle": "NPR Music",
+    "videoOwnerChannelId": "UC4eYXhJI4-7wSWc8UNRwD4A"
+   },
+   "contentDetails": {
+    "videoId": "dQw4w9WgXcQ",
+    "videoPublishedAt": "2026-09-09T15:00:06Z"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "x",
+   "id": "UExVaaaaaaaaaaa",
+   "snippet": {
+    "publishedAt": "2026-09-08T15:00:06Z",
+    "channelId": "UC4eYXhJI4-7wSWc8UNRwD4A",
+    "title": "Private video",
+    "description": "This video is private.",
+    "channelTitle": "NPR Music",
+    "playlistId": "UULF4eYXhJI4-7wSWc8UNRwD4A",
+    "position": 0,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "aaaaaaaaaaa"
+    },
+    "videoOwnerChannelTitle": "NPR Music",
+    "videoOwnerChannelId": "UC4eYXhJI4-7wSWc8UNRwD4A"
+   },
+   "contentDetails": {
+    "videoId": "aaaaaaaaaaa",
+    "videoPublishedAt": "2026-09-08T15:00:06Z"
+   }
+  },
+  {
+   "kind": "youtube#playlistItem",
+   "etag": "x",
+   "id": "UExVbbbbbbbbbbb",
+   "snippet": {
+    "publishedAt": "2026-09-07T15:00:06Z",
+    "channelId": "UC4eYXhJI4-7wSWc8UNRwD4A",
+    "title": "Ratboys: Tiny Desk Concert",
+    "description": "Ratboys bring their Chicago rock.",
+    "channelTitle": "NPR Music",
+    "playlistId": "UULF4eYXhJI4-7wSWc8UNRwD4A",
+    "position": 0,
+    "resourceId": {
+     "kind": "youtube#video",
+     "videoId": "bbbbbbbbbbb"
+    },
+    "videoOwnerChannelTitle": "NPR Music",
+    "videoOwnerChannelId": "UC4eYXhJI4-7wSWc8UNRwD4A"
+   },
+   "contentDetails": {
+    "videoId": "bbbbbbbbbbb",
+    "videoPublishedAt": "2026-09-07T15:00:06Z"
+   }
+  }
+ ],
+ "pageInfo": {
+  "totalResults": 3,
+  "resultsPerPage": 15
+ }
+}

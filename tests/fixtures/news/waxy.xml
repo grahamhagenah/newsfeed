@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Waxy.org</title>
+	<atom:link href="https://waxy.org/feed/" rel="self" type="application/rss+xml" />
+	<link>https://waxy.org/</link>
+	<description>Andy Baio lives here</description>
+	<lastBuildDate>Thu, 10 Sep 2026 16:43:38 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=7.1</generator>
+
+<image>
+	<url>https://waxy.org/wp-content/uploads/2016/10/square_logo-150x150.png</url>
+	<title>Waxy.org</title>
+	<link>https://waxy.org/</link>
+	<width>32</width>
+	<height>32</height>
+</image> 
+	<item>
+		<title>9/11 in Realtime</title>
+		<link>https://911realtime.org/</link>
+					<comments>https://waxy.org/2026/09/9-11-in-realtime/#respond</comments>
+		
+		<dc:creator><![CDATA[Andy Baio]]></dc:creator>
+		<pubDate>Thu, 10 Sep 2026 16:43:38 +0000</pubDate>
+				<category><![CDATA[Links]]></category>
+		<guid isPermaLink="false">https://waxy.org/?p=51251</guid>
+
+					<description><![CDATA[<p>impressive archival project synchronizing TV broadcasts, radio traffic, pagers, newsgroups, and more</p>
+ <a href="https://waxy.org/2026/09/9-11-in-realtime/">#</a>]]></description>
+										<content:encoded><![CDATA[<p>impressive archival project synchronizing TV broadcasts, radio traffic, pagers, newsgroups, and more</p>
+ <a href="https://waxy.org/2026/09/9-11-in-realtime/">#</a>]]></content:encoded>
+					
+					<wfw:commentRss>https://waxy.org/2026/09/9-11-in-realtime/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item><item>
+		<title>Modern Day Typographer</title>
+		<link>https://www.youtube.com/watch?v=0Ck-NPqf2c8</link>
+					<comments>https://waxy.org/2026/09/modern-day-typographer/#respond</comments>
+		
+		<dc:creator><![CDATA[Andy Baio]]></dc:creator>
+		<pubDate>Thu, 10 Sep 2026 02:14:07 +0000</pubDate>
+				<category><![CDATA[Links]]></category>
+		<guid isPermaLink="false">https://waxy.org/?p=51248</guid>
+
+					<description><![CDATA[<p>&#8220;Papyrus is a virus and restraint is the inoculum&#8221;</p>
+ via <a href="https://actsofvolition.com/2026/09/modern-day-typographer/">actsofvolition.com</a> <a href="https://waxy.org/2026/09/modern-day-typographer/">#</a>]]></description>
+										<content:encoded><![CDATA[<p>&#8220;Papyrus is a virus and restraint is the inoculum&#8221;</p>
+ via <a href="https://actsofvolition.com/2026/09/modern-day-typographer/">actsofvolition.com</a> <a href="https://waxy.org/2026/09/modern-day-typographer/">#</a>]]></content:encoded>
+					
+					<wfw:commentRss>https://waxy.org/2026/09/modern-day-typographer/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item><item>
+		<title>Usenet-Rewind</title>
+		<link>https://www.usenet-rewind.com/</link>
+					<comments>https://waxy.org/2026/09/usenet-rewind/#respond</comments>
+		
+		<dc:creator><![CDATA[Andy Baio]]></dc:creator>
+		<pubDate>Wed, 09 Sep 2026 20:20:09 +0000</pubDate>
+				<category><![CDATA[Links]]></category>
+		<guid isPermaLink="false">https://waxy.org/?p=51245</guid>
+
+					<description><![CDATA[<p>new commercial archive with deep full-text search of 982M posts going back to 1981</p>
+ <a href="https://waxy.org/2026/09/usenet-rewind/">#</a>]]></description>
+										<content:encoded><![CDATA[<p>new commercial archive with deep full-text search of 982M posts going back to 1981</p>
+ <a href="https://waxy.org/2026/09/usenet-rewind/">#</a>]]></content:encoded>
+					
+					<wfw:commentRss>https://waxy.org/2026/09/usenet-rewind/feed/</wfw:commentRss>
+			<slash:comments>0</slash:comments>
+		
+		
+			</item>
+	</channel>
+</rss>

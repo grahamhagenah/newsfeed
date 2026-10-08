@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:nyt="http://www.nytimes.com/namespaces/rss/2.0" version="2.0">
+  <channel>
+    <title>NYT &gt; Top Stories</title>
+    <link>https://www.nytimes.com</link>
+    <atom:link href="https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml" rel="self" type="application/rss+xml"></atom:link>
+    <description></description>
+    <language>en-us</language>
+    <copyright>Copyright 2026 The New York Times Company</copyright>
+    <lastBuildDate>Sat, 12 Sep 2026 19:04:05 +0000</lastBuildDate>
+    <pubDate>Sat, 12 Sep 2026 18:50:18 +0000</pubDate>
+    <image>
+      <title>NYT &gt; Top Stories</title>
+      <url>https://static01.nyt.com/images/misc/NYT_logo_rss_250x40.png</url>
+      <link>https://www.nytimes.com</link>
+    </image>
+    <item>
+      <title>Anthropic C.E.O. Dario Amodei Calls for A.I. Slowdown</title>
+      <link>https://www.nytimes.com/2026/09/12/technology/anthropic-dario-amodei-ai-slowdown.html</link>
+      <guid isPermaLink="true">https://www.nytimes.com/2026/09/12/technology/anthropic-dario-amodei-ai-slowdown.html</guid>
+      <atom:link href="https://www.nytimes.com/2026/09/12/technology/anthropic-dario-amodei-ai-slowdown.html" rel="standout"></atom:link>
+      <description>In an essay, the head of Anthropic laid out the rapidly advancing capabilities of artificial intelligence and said there needed to be greater safety controls across the industry.</description>
+      <dc:creator>Mike Isaac</dc:creator>
+      <pubDate>Sat, 12 Sep 2026 18:50:18 +0000</pubDate>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Artificial Intelligence</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Research</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Computer Security</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Cyberattacks and Hackers</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">Anthropic AI LLC</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Amodei, Dario</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">OpenAI Labs</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Regulation and Deregulation of Industry</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Computers and the Internet</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Innovation</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Coxon, Jacob</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Hassabis, Demis</category>
+      <media:content height="1800" medium="image" url="https://static01.nyt.com/images/2026/09/12/multimedia/12biz-anthropic-01-hwpt/12biz-anthropic-01-hwpt-mediumSquareAt3X.jpg" width="1800"></media:content>
+      <media:credit>Ludovic Marin/Agence France-Presse — Getty Images</media:credit>
+      <media:description>Dario Amodei, Anthropic’s chief executive, in February. “Over the last few months, I have become convinced that fully addressing the risks requires even more prudence,” he wrote in an essay.</media:description>
+    </item><item>
+      <title>Inside the Discussions at AI Companies Over a Superintelligence Doomsday</title>
+      <link>https://www.nytimes.com/2026/09/12/technology/doomsday-discussions-ai-companies.html</link>
+      <guid isPermaLink="true">https://www.nytimes.com/2026/09/12/technology/doomsday-discussions-ai-companies.html</guid>
+      <atom:link href="https://www.nytimes.com/2026/09/12/technology/doomsday-discussions-ai-companies.html" rel="standout"></atom:link>
+      <description>Researchers at Anthropic, OpenAI, Meta and Google are increasingly trying to raise awareness about the risks of artificial intelligence.</description>
+      <dc:creator>Mike Isaac and Kate Conger</dc:creator>
+      <pubDate>Sat, 12 Sep 2026 16:03:19 +0000</pubDate>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Artificial Intelligence</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Computers and the Internet</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Regulation and Deregulation of Industry</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Computer Security</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Doomsday</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Research</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Start-ups</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">Anthropic AI LLC</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">Google Inc</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">Meta Platforms Inc</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">OpenAI Labs</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Altman, Samuel H</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Amodei, Dario</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Coxon, Jacob</category>
+      <media:content height="1801" medium="image" url="https://static01.nyt.com/images/2026/09/12/multimedia/12biz-ai-employees-4-tpbk/12biz-ai-employees-4-tpbk-mediumSquareAt3X.jpg" width="1800"></media:content>
+      <media:credit>Jason Henry for The New York Times</media:credit>
+      <media:description>A demonstration of Anthropic’s Claude Cowork A.I. agent in May. The company’s employees have been talking about the risks of artificial intelligence after a colleague, citing dangers, resigned this week.</media:description>
+    </item><item>
+      <title>Why It’s Difficult for Tech Companies to Rein In A.I.</title>
+      <link>https://www.nytimes.com/2026/09/12/technology/why-its-tough-for-tech-companies-to-keep-ai-out-of-trouble.html</link>
+      <guid isPermaLink="true">https://www.nytimes.com/2026/09/12/technology/why-its-tough-for-tech-companies-to-keep-ai-out-of-trouble.html</guid>
+      <atom:link href="https://www.nytimes.com/2026/09/12/technology/why-its-tough-for-tech-companies-to-keep-ai-out-of-trouble.html" rel="standout"></atom:link>
+      <description>Researchers say artificial intelligence is developing faster than the systems put in place to monitor and control it.</description>
+      <dc:creator>Sheera Frenkel and Dylan Freedman</dc:creator>
+      <pubDate>Sat, 12 Sep 2026 16:18:06 +0000</pubDate>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Artificial Intelligence</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Computers and the Internet</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Computer Security</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/des">Cyberattacks and Hackers</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">Anthropic AI LLC</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">Hugging Face Inc</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Coxon, Jacob</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Soares, Nate</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_per">Hawley, Josh D (1979- )</category>
+      <category domain="http://www.nytimes.com/namespaces/keywords/nyt_org">OpenAI Labs</category>
+      <media:content height="1800" medium="image" url="https://static01.nyt.com/images/2026/09/11/business/00ai-safeguards/00ai-safeguards-mediumSquareAt3X.jpg" width="1800"></media:content>
+      <media:credit>Jun Cen</media:credit>
+    </item>
+  </channel>
+</rss>

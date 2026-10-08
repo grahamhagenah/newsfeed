@@ -1,0 +1,29 @@
+{
+ "resultCount": 3,
+ "results": [
+  {
+   "wrapperType": "track",
+   "kind": "podcast",
+   "collectionId": 1080911743,
+   "collectionName": "The Big Picture",
+   "feedUrl": "https://feeds.megaphone.fm/the-big-picture",
+   "collectionViewUrl": "https://podcasts.apple.com/us/podcast/the-big-picture/id1080911743"
+  },
+  {
+   "wrapperType": "podcastEpisode",
+   "kind": "podcast-episode",
+   "trackId": 1000790786635,
+   "trackName": "The Winners and Losers of the Summer",
+   "episodeUrl": "https://traffic.megaphone.fm/GLT4610342099.mp3",
+   "trackViewUrl": "https://podcasts.apple.com/us/podcast/the-winners-and-losers-of-the-summer/id1080911743?i=1000790786635"
+  },
+  {
+   "wrapperType": "podcastEpisode",
+   "kind": "podcast-episode",
+   "trackId": 1000789112233,
+   "trackName": "The 10 Best Movies at the Telluride and Venice Film Festivals. Plus: Nathan Fielder's Stunning Elizabeth Holmes Doc.",
+   "episodeUrl": "https://dts.podtrac.com/redirect.mp3/traffic.megaphone.fm/GLT9012853978.mp3",
+   "trackViewUrl": "https://podcasts.apple.com/us/podcast/the-10-best-movies/id1080911743?i=1000789112233"
+  }
+ ]
+}
