@@ -113,7 +113,7 @@ class Scripts(unittest.TestCase):
         node = shutil.which("node")
         if not node:
             self.skipTest("node isn't installed")
-        # Whichever pages this copy has: the newsfeed on its own (news/template.py) has no events page.
+        # Whichever pages this copy has: the newsfeed's repo has no events page.
         scripts = {}
         for page in ("events", "news"):
             try:

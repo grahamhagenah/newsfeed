@@ -30,7 +30,7 @@ OUT_DIR = ROOT.parent / "dist" / "news"
 # Whose newsfeed this is, so a copy of it in someone else's repo points at theirs: the repo GitHub is building
 # (GITHUB_REPOSITORY), where it's published (SITE_URL, for a custom domain; otherwise GitHub Pages' own address
 # for the repo), and a sister site to name in the header beside it (EVENTS_URL). A copy needs none of them set.
-REPO = os.environ.get("GITHUB_REPOSITORY") or "grahamhagenah/news"
+REPO = os.environ.get("GITHUB_REPOSITORY") or "grahamhagenah/newsfeed"
 OWNER, _, NAME = REPO.partition("/")
 REPO_URL = f"https://github.com/{REPO}"
 SITE_URL = (os.environ.get("SITE_URL") or f"https://{OWNER}.github.io/{NAME}/").rstrip("/") + "/"
@@ -1211,8 +1211,8 @@ Public is what makes the page free to publish; the only thing in it is your list
 <li><strong>Turn on the builds.</strong> Go to the <strong>Actions</strong> tab and press the button that
 enables workflows. Choose <strong>Build and deploy</strong> on the left, then <strong>Run workflow</strong>.</li>
 <li><strong>Open your page.</strong> A minute or so later it\u2019s at
-<code>https://&lt;your username&gt;.github.io/&lt;your repository&gt;/</code>. It starts with a handful of sites
-so there\u2019s something to look at.</li>
+<code>https://&lt;your username&gt;.github.io/&lt;your repository&gt;/</code>. It starts with the same sites as
+this one, so there\u2019s something to look at; swap them for your own below.</li>
 </ol>
 
 <h1>Add your own sites</h1>
