@@ -20,16 +20,6 @@ https://hnrss.org/frontpage?points=150   Hacker News
 https://feeds.arstechnica.com/arstechnica/index   Ars Technica   limit=6
 https://rss.wbur.org/news/rss   WBUR News   limit=6
 
-# Reddit. Each subreddit's top posts of the day: a post that shares an article goes to the article,
-# with the thread as its comments.
-https://www.reddit.com/r/boston/top/.rss?t=day   r/boston   limit=6
-https://www.reddit.com/r/CambridgeMA/top/.rss?t=day   r/CambridgeMA   limit=4
-https://www.reddit.com/r/politics/top/.rss?t=day   r/politics   limit=6
-https://www.reddit.com/r/oil/top/.rss?t=day   r/oil   limit=4
-https://www.reddit.com/r/singularity/top/.rss?t=day   r/singularity   limit=5
-https://www.reddit.com/r/transit/top/.rss?t=day   r/transit   limit=5
-https://www.reddit.com/r/yimby/top/.rss?t=day   r/yimby   limit=4
-
 # The eclectic web
 https://kottke.org/
 https://waxy.org/               Waxy.org   days=7
