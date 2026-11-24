@@ -1,4 +1,5 @@
-"""Draw the icons in static/ (three white bars on black) as PNGs, with no dependencies. Run once after changing the design."""
+"""Draw the icons in static/ (a white "n" and a green period on black, the logo's "newsfeed." in short) as PNGs,
+with no dependencies. Run once after changing the design; favicon.svg is the same drawing."""
 
 import struct
 import zlib
@@ -6,6 +7,7 @@ from pathlib import Path
 
 OUT = Path(__file__).parent / "static"
 SAMPLES = 4  # Supersampling per axis, for smooth edges.
+WHITE, GREEN = (255, 255, 255), (52, 211, 153)  # The page's text, and the articles' green (--article).
 
 
 def inside_rounded(x, y, x0, y0, x1, y1, r):
@@ -14,26 +16,46 @@ def inside_rounded(x, y, x0, y0, x1, y1, r):
     return x0 <= x <= x1 and y0 <= y <= y1 and dx * dx + dy * dy <= r * r
 
 
-def draw(size, corner, bars):
-    """corner: background corner radius; bars: (x0, y_center, width, height), all in 0..1 units."""
+def mark(scale):
+    """The "n." as (is this point inside it, its color) pairs, in 0..1 units, scaled about the middle: an "n" of a
+    stem and an arch of the same weight, and the period on its baseline."""
+    def at(v):
+        return .5 + (v - .5) * scale
+
+    t, x0, x1, top, base = .14 * scale, at(.165), at(.585), at(.3), at(.74)  # "n." centered across.
+    radius = (x1 - x0) / 2
+    cx, cy = x0 + radius, top + radius
+    dot = .085 * scale
+    dot_x, dot_y = x1 + .08 * scale + dot, base - dot
+
+    def n(x, y):
+        stem = x0 <= x <= x0 + t and top <= y <= base  # Full height, square at the top, as an "n" is.
+        right = x1 - t <= x <= x1 and cy <= y <= base
+        d = ((x - cx) ** 2 + (y - cy) ** 2) ** .5
+        arch = y <= cy and radius - t <= d <= radius
+        return stem or right or arch
+
+    return [(n, WHITE), (lambda x, y: (x - dot_x) ** 2 + (y - dot_y) ** 2 <= dot * dot, GREEN)]
+
+
+def draw(size, corner, shapes):
+    """corner: the black background's corner radius; shapes: (inside, color) pairs, all in 0..1 units."""
     rows = []
+    n = SAMPLES * SAMPLES
     for py in range(size):
         row = bytearray()
         for px in range(size):
-            bg = fg = 0
+            bg, rgb = 0, [0, 0, 0]
             for sy in range(SAMPLES):
                 for sx in range(SAMPLES):
                     x = (px + (sx + 0.5) / SAMPLES) / size
                     y = (py + (sy + 0.5) / SAMPLES) / size
                     if inside_rounded(x, y, 0, 0, 1, 1, corner):
                         bg += 1
-                        if any(inside_rounded(x, y, bx, cy - h / 2, bx + w, cy + h / 2, h / 2) for bx, cy, w, h in bars):
-                            fg += 1
-            n = SAMPLES * SAMPLES
-            alpha = bg / n
-            white = fg / bg if bg else 0
-            v = round(255 * white)
-            row += bytes((v, v, v, round(255 * alpha)))
+                        color = next((color for inside, color in shapes if inside(x, y)), None)
+                        if color:
+                            rgb = [total + part for total, part in zip(rgb, color)]
+            row += bytes(round(part / bg) if bg else 0 for part in rgb) + bytes((round(255 * bg / n),))
         rows.append(bytes(row))
     return rows
 
@@ -51,16 +73,13 @@ def png(size, rows):
     )
 
 
-# Home-screen icons: square (the OS rounds the corners), bars kept inside the central safe zone.
-APP_BARS = [(0.27, 0.38, 0.46, 0.075), (0.27, 0.50, 0.33, 0.075), (0.27, 0.62, 0.40, 0.075)]
-# Tab icon: rounded square, bars larger so they read at 16–32px. Matches favicon.svg.
-TAB_BARS = [(0.20, 0.30, 0.60, 0.12), (0.20, 0.50, 0.42, 0.12), (0.20, 0.70, 0.52, 0.12)]
-
-for name, size, corner, bars in [
-    ("favicon-32.png", 32, 0.22, TAB_BARS),
-    ("apple-touch-icon.png", 180, 0, APP_BARS),
-    ("icon-192.png", 192, 0, APP_BARS),
-    ("icon-512.png", 512, 0, APP_BARS),
+# Home-screen icons: square (the OS rounds the corners), the mark kept inside the central safe zone. Tab icon:
+# a rounded square, the mark larger so it reads at 16–32px.
+for name, size, corner, scale in [
+    ("favicon-32.png", 32, 0.22, 1),
+    ("apple-touch-icon.png", 180, 0, .72),
+    ("icon-192.png", 192, 0, .72),
+    ("icon-512.png", 512, 0, .72),
 ]:
-    (OUT / name).write_bytes(png(size, draw(size, corner, bars)))
+    (OUT / name).write_bytes(png(size, draw(size, corner, mark(scale))))
     print("wrote", name)

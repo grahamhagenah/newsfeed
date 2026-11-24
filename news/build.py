@@ -29,12 +29,11 @@ FEEDS_FILE = ROOT / "feeds.txt"
 OUT_DIR = ROOT.parent / "dist" / "news"
 # Whose newsfeed this is, so a copy of it in someone else's repo points at theirs: the repo GitHub is building
 # (GITHUB_REPOSITORY), where it's published (SITE_URL, for a custom domain; otherwise GitHub Pages' own address
-# for the repo), and a sister site to name in the header beside it (EVENTS_URL). A copy needs none of them set.
+# for the repo). A copy needs neither set.
 REPO = os.environ.get("GITHUB_REPOSITORY") or "grahamhagenah/newsfeed"
 OWNER, _, NAME = REPO.partition("/")
 REPO_URL = f"https://github.com/{REPO}"
 SITE_URL = (os.environ.get("SITE_URL") or f"https://{OWNER}.github.io/{NAME}/").rstrip("/") + "/"
-SISTER_SITE = os.environ.get("EVENTS_URL", "").strip()
 POSTS_PER_FEED = 15  # Per site; override with limit=N in feeds.txt.
 PAGE_SIZE = 30  # Posts per page of the list.
 DAYS_TO_KEEP = 3  # Older posts are dropped; override with days=N in feeds.txt.
@@ -717,15 +716,15 @@ def render_rss(posts, built_at, path="feed.xml"):
 """
 
 
-# Each post's mark, before its source: a page of text for an article, headphones for a podcast episode, a
-# screen with a play button for a video, and a speech bubble for a post from a subreddit.
+# Each post's mark, before its source: lines of text for an article, a sound wave for a podcast episode, a
+# play button for a video, and a speech bubble for a post from a subreddit.
 # Drawn once in the page; rows point to the drawing. Unread, it takes its kind's color; read, it goes gray.
 ICON_DRAWINGS = {
-    "article": '<rect x="3" y="1.75" width="10" height="12.5" rx="1.5"/><path d="M5.75 5.5h4.5M5.75 8h4.5M5.75 10.5h2.75"/>',
-    "podcast": '<path d="M2.75 10.5V8a5.25 5.25 0 0 1 10.5 0v2.5"/>'
-               '<rect x="1.5" y="9.5" width="3.25" height="5" rx="1.25" fill="currentColor" stroke="none"/>'
-               '<rect x="11.25" y="9.5" width="3.25" height="5" rx="1.25" fill="currentColor" stroke="none"/>',
-    "video": '<rect x="1.5" y="2.75" width="13" height="10.5" rx="2"/><path d="M6.5 5.75v4.5L10.25 8z" fill="currentColor"/>',
+    "article": '<path d="M2.5 4h11M2.5 8h11M2.5 12h6.5" stroke-width="1.75"/>',
+    "podcast": '<path d="M2 6.5v3M5 4v8M8 1.75v12.5M11 4.5v7M14 6.5v3"/>',
+    # Its point a little right of the middle, so the triangle looks centered rather than measures it.
+    # Drawn smaller with a thick round stroke, which rounds its corners well beyond the other marks' strokes.
+    "video": '<path d="M5.25 4v8L12.25 8z" fill="currentColor" stroke-width="3"/>',
     "reddit": '<path d="M3.25 2.5h9.5a1.75 1.75 0 0 1 1.75 1.75v5.5a1.75 1.75 0 0 1-1.75 1.75H7.5L4.5 14v-2.5H3.25'
               'A1.75 1.75 0 0 1 1.5 9.75v-5.5A1.75 1.75 0 0 1 3.25 2.5z"/>'
               '<circle cx="5.5" cy="7" r=".9" fill="currentColor" stroke="none"/>'
@@ -802,10 +801,12 @@ def render_index(feeds, posts, failed, stale, built_at):
              ("videos", "video", "Videos", any(post.get("video") and not post.get("reddit") for post in posts)),
              ("reddit", "reddit", "Reddit", any(post.get("reddit") for post in posts))]
     show_filter = (
-        '<nav class="filter" aria-label="Show"><button data-show="all">All</button>'
+        '<div class="bar-mark" aria-hidden="true"></div><nav class="filter" aria-label="Show"><span class="chips"><button data-show="all">All</button>'
         f'<button data-show="articles">{icon("article", decorative=True)}Articles</button>'
         + "".join(f'<button data-show="{key}">{icon(mark, decorative=True)}{label}</button>' for key, mark, label, there in kinds if there)
-        + f'<span class="finders">{shared.menu({post["source"] for post in posts}, "All sources", "Source")}{shared.SEARCH}</span></nav>\n'
+        + '<span class="pick-box"><span class="pick-said" aria-hidden="true">Source</span>'
+        + f'{shared.menu({post["source"] for post in posts}, "All sources", "Source")}</span></span>'
+        + f'<span class="finders">{SEARCH}<button class="search-clear" type="button" aria-label="Clear the search" hidden></button></span></nav>\n'
         if any(there for *_, there in kinds)
         else ""
     )
@@ -1045,6 +1046,10 @@ INDEX_JS = """
   const filter = document.querySelector(".filter");
   const search = document.querySelector(".search");
   const from = document.querySelector(".filter .pick");
+  const clearSearch = document.querySelector(".search-clear");
+  // The search's box says what can be searched where it has the room; a short one, just "Search".
+  const hint = () => search.setAttribute("placeholder", search.closest(".finders").clientWidth > 280 ? search.dataset.hint : "Search");
+  if (search && search.dataset.hint) { addEventListener("resize", hint); hint(); }
   let show = "all";
   try { show = (filter && localStorage.getItem("reader-show")) || "all"; } catch (error) {}
   const plain = text => text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -1084,7 +1089,17 @@ INDEX_JS = """
       : { podcasts: "No podcast episodes right now.", videos: "No videos right now.", reddit: "No Reddit posts right now." }[show] || "No articles right now.";
     if (from) from.classList.toggle("chosen", Boolean(source));
     empty.hidden = shown.length > 0;
-    if (filter) for (const b of filter.querySelectorAll("button")) b.setAttribute("aria-pressed", b.dataset.show === show);
+    if (filter) for (const b of filter.querySelectorAll("button[data-show]")) b.setAttribute("aria-pressed", b.dataset.show === show);
+    if (clearSearch) clearSearch.hidden = !search.value;
+    // The source's chip says "Source" until one's chosen, and then which, as the menu tells a screen reader.
+    if (from) {
+      const box = from.closest(".pick-box"), name = from.options[from.selectedIndex].textContent.trim();
+      if (box) {
+        box.querySelector(".pick-said").textContent = source ? name : "Source";
+        box.classList.toggle("chosen", Boolean(source));
+      }
+      from.setAttribute("aria-label", source ? `Source: ${name}` : "Source");
+    }
   }
   showPosts();
 
@@ -1097,12 +1112,17 @@ INDEX_JS = """
   });
 
   if (filter) filter.addEventListener("click", event => {
-    const b = event.target.closest("button");
+    const b = event.target.closest("button[data-show]");
     if (!b) return;
     show = b.dataset.show;
     try { localStorage.setItem("reader-show", show); } catch (error) {}
     history.replaceState(null, "", address(1)); // Back to page one.
     showPosts();
+  });
+  if (clearSearch) clearSearch.addEventListener("click", () => {
+    search.value = "";
+    search.dispatchEvent(new Event("input"));
+    search.focus();
   });
   if (search) search.addEventListener("input", () => {
     history.replaceState(null, "", address(1));
@@ -1115,6 +1135,61 @@ INDEX_JS = """
     history.replaceState(null, "", address(1));
     showPosts();
   });
+
+  // The bar, stuck at the top of the window (see its styles). A phone's search row scrolls away with the page:
+  // the bar sticks that row's height (--lift) above the window, and scrolling back up brings it back (revealed).
+  const mark = document.querySelector(".bar-mark");
+  if (filter && mark) {
+    let revealed = false;
+    const lift = () => {
+      const chips = filter.querySelector(".chips");
+      const by = Math.max(0, Math.ceil(chips.getBoundingClientRect().top - filter.getBoundingClientRect().top
+        - parseFloat(getComputedStyle(filter).paddingBottom)));
+      document.documentElement.style.setProperty("--lift", by + "px");
+    };
+    new ResizeObserver(lift).observe(filter);
+    lift();
+    // Where the list starts, with the bar stuck over it; the page kept a window taller than that, so a search
+    // down to a few posts never leaves it too short to scroll there, which would pull the bar down off the top.
+    const listStart = () => mark.getBoundingClientRect().top + scrollY + parseFloat(getComputedStyle(filter).marginTop);
+    const keepRoom = () => { document.documentElement.style.minHeight = Math.ceil(listStart() + innerHeight) + "px"; };
+    keepRoom();
+    addEventListener("resize", keepRoom);
+    addEventListener("load", keepRoom);
+    // After the kind, the source or the search changes with the bar stuck partway down, back up to the list's
+    // start, so the new list is read from its top rather than from the middle.
+    const toList = () => {
+      keepRoom();
+      const start = listStart();
+      if (scrollY > start + 1) scrollTo({ top: start });
+    };
+    filter.addEventListener("click", event => { if (event.target.closest("button[data-show]")) toList(); });
+    if (from) from.addEventListener("change", toList);
+    if (search) search.addEventListener("input", toList);
+    // Once it's stuck over the list, the shadow under it; and the new posts' pill under the bar (--bar).
+    const markStuck = () => {
+      const stuck = mark.getBoundingClientRect().top + parseFloat(getComputedStyle(filter).marginTop)
+        < (parseFloat(getComputedStyle(filter).top) || 0);
+      filter.classList.toggle("stuck", stuck);
+      document.documentElement.style.setProperty("--bar", stuck ? Math.max(0, Math.floor(filter.getBoundingClientRect().bottom)) + "px" : "0px");
+    };
+    addEventListener("scroll", markStuck, { passive: true });
+    filter.addEventListener("transitionend", markStuck);
+    markStuck();
+    // Which way the page last went, by more than a nudge: up brings the search's row into the bar, down puts it
+    // away. Not while the search is being typed in, when the list changing under it moves the page.
+    let lastY = scrollY;
+    addEventListener("scroll", () => {
+      const moved = scrollY - lastY;
+      if (Math.abs(moved) < 8) return;
+      lastY = scrollY;
+      if (document.activeElement === search) return;
+      const on = moved < 0 && scrollY > 0;
+      if (on === revealed) return;
+      revealed = on;
+      filter.classList.toggle("revealed", on);
+    }, { passive: true });
+  }
 """
 
 
@@ -1292,24 +1367,134 @@ HEAD = """<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="alternate" type="application/rss+xml" title="Newsfeed" href="feed.xml">
 <link rel="alternate" type="application/rss+xml" title="Newsfeed: articles" href="articles.xml">"""
 
+# The search, which says "Search" where it's short, at the end of the filter's line, and what there is to search
+# where it has the room, a phone's box the width of the column, which the script puts in its place.
+SEARCH = shared.SEARCH.replace(' placeholder="Search"', ' placeholder="Search" data-hint="Search headlines and sources"')
+assert SEARCH != shared.SEARCH
+
 # The newsfeed's own styles, on top of the ones it shares with the events page (shared/site.py).
 CSS = """
-  /* Unread marks, and the filter's matching marks: green for articles, violet for podcast episodes, coral for
+  /* Unread marks, and the filter's matching marks: green for articles, violet for podcast episodes, red for
      videos, amber for Reddit posts. */
-  :root { --article: #34d399; --podcast: #a78bfa; --video: #fb7185; --reddit: #fbbf24; }
+  :root { --article: #34d399; --podcast: #a78bfa; --video: #ef4444; --reddit: #fbbf24; }
+  /* The name a size up, as Pushpin's is, a little tighter. */
+  .sites { align-items: baseline; }
+  header { align-items: center; }
+  .sites a[aria-current] { font-size: 1.75rem; letter-spacing: -.025em; }
+  @media not all and (max-width: 34rem) { .sites a[aria-current] { font-size: 1.5625rem; } }
+  /* The period: a round dot a little larger than the font's, on the baseline and a little apart from the "d",
+     so it reads as a mark of its own. */
+  .logo-dot { display: inline-block; width: .25em; height: .25em; margin-left: .1em; border-radius: 50%;
+              background: var(--article); }
   h1 { margin: 3rem 0 .75rem; color: #777; font-size: .75rem; font-weight: 600;
        letter-spacing: .08em; text-transform: uppercase; }
   h1:first-child, header + h1 { margin-top: 0; }
+  /* Pushpin's column: as wide, so a headline runs as far before it's cut off. */
+  main { max-width: 52rem; }
+  /* The filter, as Pushpin's: the search a pill, a shade off the page's black, with a magnifying glass (Tabler
+     Icons' "search", MIT license) and an × while it has something in it; and a row of chips, the kinds and then
+     the source's menu, swiped along where they don't fit. On a phone the search is a row of its own over the
+     chips, the column's width; wider, it's at the end of the chips' line. Its text is 16 pixels: Safari on an
+     iPhone zooms in on a field whose text is any smaller. */
+  .filter { row-gap: .95rem; column-gap: 0; align-items: center; }
+  .filter .finders { order: -1; flex: 1 1 100%; align-items: center; gap: 0; box-sizing: border-box; margin: 0;
+                     padding: 0 .15rem 0 .9rem; border-radius: 999px; background: #1a1a1a; }
+  .filter .finders:focus-within { background: #222; }
+  .filter .finders .search { flex: 1 1 0; width: 0; min-width: 0; height: 2.35rem; box-sizing: border-box; margin: 0;
+                             padding: 0 0 0 1.55em; border: 0; font-size: 1rem;
+                             background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10a7 7 0 1 0 14 0a7 7 0 1 0 -14 0'/%3E%3Cpath d='M21 21l-6 -6'/%3E%3C/svg%3E") no-repeat left center / .95em; }
+  .filter .finders .search:not(:focus)::placeholder { color: #8a8a8a; }
+  .filter .finders .search-clear { display: block; flex: none; width: 2.35rem; height: 2.35rem; padding: 0; border: 0; cursor: pointer;
+                                   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 6l-12 12'/%3E%3Cpath d='M6 6l12 12'/%3E%3C/svg%3E") no-repeat center / 18px; }
+  .filter .chips { display: flex; flex: 1 1 100%; align-items: center; gap: .3rem; min-width: 0; margin: -6px -1rem;
+                   padding: 6px 0; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .filter .chips::-webkit-scrollbar { display: none; }
+  /* The column's margin at each end of the row, as room before the first chip and after the last. */
+  .filter .chips::before, .filter .chips::after { content: ""; flex: none; width: .6rem; height: 1px; }
+  .filter .chips::before { order: -2; }
+  /* A source chosen is the row's first chip, where it's seen without swiping. */
+  .filter .chips .pick-box.chosen { order: -1; }
+  /* A chip is pressed over more than is drawn of it: 44 pixels' height, and out to halfway to the next. */
+  .filter .chips [data-show] { position: relative; }
+  .filter .chips [data-show]::after { content: ""; position: absolute; inset: -7px -.2rem; }
+  .filter .chips [data-show], .filter .chips .pick-box {
+    display: inline-flex; flex: none; align-items: center; box-sizing: border-box; height: 2rem; padding: 0 .6rem;
+    border: 1px solid #2a2a2a; border-radius: 999px; color: #999; font-size: .9rem; white-space: nowrap;
+    text-decoration: none; }
+  .filter .chips [data-show] > .icon { width: 13px; height: 13px; margin-right: .4em; vertical-align: -1px; }
+  @media (hover: hover) and (pointer: fine) {
+    .filter .chips [data-show]:not([aria-pressed="true"]):hover, .filter .chips .pick-box:not(.chosen):hover { border-color: #555; color: #ccc; }
+  }
+  /* What's chosen: its words white, its outline lighter and a shade of grey behind it. */
+  .filter .chips [aria-pressed="true"], .filter .chips .pick-box.chosen { border-color: #5a5a5a; background: #1c1c1c; color: #fff; }
+  /* The source's chip says "Source", or the one chosen, with a small arrow; the menu itself is over it, unseen,
+     so a press opens the browser's own list. */
+  .filter .chips .pick-box { position: relative; }
+  .pick-box .pick-said { display: block; min-width: 0; max-width: 9rem; overflow: hidden; white-space: nowrap;
+                         text-overflow: ellipsis; padding-right: 1em;
+                         background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23999' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right center / .6em; }
+  .pick-box.chosen .pick-said { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23fff' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .filter .chips .pick-box .pick { position: absolute; inset: -7px -.2rem; width: calc(100% + .4rem); max-width: none;
+                                   height: calc(100% + 14px); margin: 0; padding: 0; opacity: 0; font-size: 1rem;
+                                   cursor: pointer; }
+  .filter .chips .pick-box:has(.pick:focus-visible) { border-color: #999; }
+  /* A chip's word in the middle of it by the letters themselves, where a browser can trim a line to them. */
+  @supports (text-box: trim-both cap alphabetic) {
+    .filter .chips [data-show], .filter .chips .pick-box {
+      display: block; height: auto; padding: calc((2rem - 2px - 1cap) / 2) .6rem; line-height: 1; }
+    .filter .chips [data-show], .pick-box .pick-said { text-box: trim-both cap alphabetic; }
+    .pick-box .pick-said { padding-block: .4em; margin-block: -.4em; }
+  }
+  /* Wider than a phone, the search at the end of the chips' line, the chips' height. */
+  @media not all and (max-width: 34rem) {
+    body .filter { flex-wrap: nowrap; column-gap: 1rem; }
+    body .filter .finders { order: 1; flex: 1 0 9rem; max-width: 16rem; margin-left: auto; }
+    body .filter .chips { flex: 0 1 auto; margin-right: 0; }
+    body .filter .chips::after { width: 0; }
+    body .filter .finders .search, body .filter .finders .search-clear { height: 2rem; }
+    body .filter .finders .search-clear { width: 2rem; }
+  }
+  /* The filter as a bar that stays at the top of the window while the posts scroll under it, as Pushpin's does:
+     black, so they're hidden there, with the same room around it as before (padding where it's black, taken
+     back out of its margins). On a phone the search, its first row, scrolls away with the page: the bar sticks
+     --lift, that row's height, above the window (the script measures it), so only the chips stay; scrolling back
+     up slides it back down into the bar (revealed), and scrolling on down puts it away again. */
+  .filter { position: sticky; top: calc(-1 * var(--lift, 0px)); z-index: 3; padding: .3rem 0 .55rem;
+            margin-top: -1.05rem; margin-bottom: 1.2rem; background: #000; transition: top .2s ease; }
+  .filter.revealed { top: 0; }
+  @media (prefers-reduced-motion: reduce) { .filter { transition: none; } }
+  /* Once it's stuck over the list, a shadow under it rather than a line, so the posts dim as they go under it
+     instead of being cut off; it comes in gently as the bar sticks. */
+  .filter::after { content: ""; position: absolute; top: 100%; left: -.6rem; right: -.6rem; height: 22px;
+                   background: linear-gradient(rgba(0, 0, 0, .75), rgba(0, 0, 0, .5) 4px, rgba(0, 0, 0, .27) 9px,
+                                               rgba(0, 0, 0, .1) 15px, transparent);
+                   pointer-events: none; opacity: 0; transition: opacity .3s; }
+  .filter.stuck::after { opacity: 1; }
+  @media (max-width: 34rem) { .filter::after { left: -1rem; right: -1rem; } }
+  /* No scroll anchoring: as the list is rewritten the browser would scroll to hold a post in place, pulling the
+     bar down off the top with it. */
+  html { overflow-anchor: none; }
   .filter .icon { color: var(--article); }
   .filter [data-show="podcasts"] .icon { color: var(--podcast); }
   .filter [data-show="videos"] .icon { color: var(--video); }
   .filter [data-show="reddit"] .icon { color: var(--reddit); }
-  li { padding: .4rem 0; }
+  li { padding: .45rem 0; }
+  /* A headline a size up from the page's text, easy to read down a long list, and its kind's mark big enough
+     to tell at a glance. */
+  .posts .headline .title { font-size: 1.1875rem; }
+  .posts > .row > .icon { width: 15px; height: 15px; }
+  @media (max-width: 34rem) {
+    .posts > li { padding-top: .65rem; padding-bottom: .65rem; }
+    .posts .headline .title { font-size: 1.25rem; }
+    /* The icon beside the middle of the larger headline's first line. */
+    .posts > .row > .icon { width: 16px; height: 16px; top: calc(.65rem + .89rem - 8px); }
+    .posts > .row { padding-left: calc(16px + .7em); }
+  }
   ol { padding-left: 1.25rem; }
   ol li { padding: .3rem 0; }
   /* Until the script picks the page, show the first one, so the whole list never flashes up. */
   .posts:not(.paged) li:nth-child(n+PAGE_START) { display: none; }
-  .note, time { color: #666; font-size: .8em; }
+  .note, time { color: #808080; font-size: .8em; }
   .headline time, .headline .comments, .headline .tag { flex: none; }
   .headline > .via, .headline > .sep { display: none; }
   /* A label a feeds.txt line gives its posts, like Pitchfork's Best New Music: small, white like its mark,
@@ -1325,8 +1510,8 @@ CSS = """
   @media (max-width: 34rem) {
     /* A phone's line: the headline, how long ago, its comments, and who it's from. */
     .headline > time, .headline > .comments, .headline > .tag { margin-left: 0; }
-    .headline > .via { display: inline; color: #666; font-size: .8em; white-space: nowrap; }
-    .headline > .sep { display: inline; color: #666; font-size: .8em; }
+    .headline > .via { display: inline; color: #808080; font-size: .8em; white-space: nowrap; }
+    .headline > .sep { display: inline; color: #808080; font-size: .8em; }
     .posts .row > .source { display: none; }
   }
   /* The video player: a window of its own in the corner of the page, alone on black. */
@@ -1403,16 +1588,16 @@ CSS = """
   .player-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
   .player-note { margin: .75rem 0 0; color: #999; font-size: .85rem; }
   .player-note a { color: #fff; text-decoration: underline; text-underline-offset: .2em; }
-  .new-posts { position: fixed; z-index: 2; top: calc(env(safe-area-inset-top) + .75rem); left: 50%;
+  .new-posts { position: fixed; z-index: 2; top: calc(env(safe-area-inset-top) + var(--bar, 0px) + .75rem); left: 50%;
                transform: translateX(-50%); padding: .45rem 1.1rem; border: 0; border-radius: 999px;
                background: #fff; color: #000; font-family: inherit; font-size: .8rem; font-weight: 600; cursor: pointer; }
   a:visited { color: #666; }
-  .comments, .comments:visited { margin-left: .6em; color: #666; font-size: .8em; white-space: nowrap; }
+  .comments, .comments:visited { margin-left: .6em; color: #808080; font-size: .8em; white-space: nowrap; }
   p a, ol a { text-decoration: underline; text-decoration-color: #555; text-underline-offset: .2em; }
   time, .note { margin-left: .6em; white-space: nowrap; }
   footer time { margin: 0; font-size: inherit; }
   /* The sources page. */
-  .remove, .remove:visited { margin-left: .8em; color: #666; font-size: .8em; }
+  .remove, .remove:visited { margin-left: .8em; color: #808080; font-size: .8em; }
   .sources { columns: 2; column-gap: 2.5rem; }
   .sources li { break-inside: avoid; }
   @media (max-width: 34rem) { .sources { columns: 1; } }
@@ -1428,10 +1613,16 @@ CSS = """
 """.replace("PAGE_START", str(PAGE_SIZE + 1))
 
 
+# The name in the header: "newsfeed." in lowercase, the period in the articles' green, like a mark of something
+# unread. The tab and home-screen icons are its "n." (make_icons.py).
+LOGO = 'newsfeed<span class="logo-dot" aria-hidden="true"></span>'
+
+
 def page(title, body, updated=None):
-    # The header names the sister site beside this one, where there is one; alone, the newsfeed is the header.
-    links = None if SISTER_SITE else [("Newsfeed", "./", True)]
-    return shared.page("news", title, body, css=CSS, head=HEAD, symbols=ICON_SYMBOLS, updated=updated, links=links)
+    # The header is the newsfeed's name alone.
+    return shared.page("news", title, body, css=CSS, head=HEAD, symbols=ICON_SYMBOLS, updated=updated,
+                       links=[("Newsfeed", "./", True)],
+                       marked={"Newsfeed": LOGO})
 
 
 def saved(post):

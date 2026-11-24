@@ -73,6 +73,6 @@ Nothing but the Python standard library.
 ---
 
 This repo is the live newsfeed at [news.grahamhagenah.com](https://news.grahamhagenah.com/) as well as the
-template: its `SITE_URL` and `EVENTS_URL` variables (the header's link to [Pushpin](https://pushpin.city)) are
+template: its `SITE_URL` variable is
 set here and not copied. Its history before November 2026 is from
 [grahamhagenah/news](https://github.com/grahamhagenah/news), where it was built alongside Pushpin.

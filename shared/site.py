@@ -152,7 +152,7 @@ HEADER_CSS = """
          font: 17px/1.45 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
   main { max-width: 46rem; margin: 0 auto; }
   header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 2rem; }
-  .header-note { color: #666; font-size: .8rem; white-space: nowrap; }
+  .header-note { color: #808080; font-size: .8rem; white-space: nowrap; }
   .header-note time { margin: 0; font-size: inherit; }
   /* The newsfeed and the events page, as a pair: the one you're on in white, the other a gray link to it. */
   .sites { display: flex; gap: .9rem; }
@@ -165,7 +165,7 @@ BASE_CSS = HEADER_CSS + """
   /* Its choices at the top of the row, as a link sits, so a page whose choices are buttons (which center
      their text in the row's height, set by the menu and search) puts them at the same height as one of links. */
   .filter { display: flex; flex-wrap: wrap; align-items: flex-start; gap: .4rem 1.1rem; margin: -.75rem 0 1.75rem; }
-  .filter button, .filter a { padding: 0; border: 0; background: none; color: #666; font: inherit; font-size: .8rem;
+  .filter button, .filter a { padding: 0; border: 0; background: none; color: #808080; font: inherit; font-size: .8rem;
                               text-decoration: none; cursor: pointer; }
   .filter button:hover, .filter a:hover { color: #999; text-decoration: none; }
   .filter button[aria-pressed="true"], .filter a[aria-current="page"] { color: #fff; }
@@ -182,7 +182,7 @@ BASE_CSS = HEADER_CSS + """
   .row > .icon { align-self: center; }
   .symbols { position: absolute; width: 0; height: 0; overflow: hidden; }
   .icon { flex: none; width: 12px; height: 12px; }
-  .source { display: flex; justify-content: flex-end; align-items: center; min-width: 0; max-width: 14rem; color: #666;
+  .source { display: flex; justify-content: flex-end; align-items: center; min-width: 0; max-width: 14rem; color: #808080;
             font-size: .8em; text-align: right; }
   .source > span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .headline { display: flex; align-items: baseline; min-width: 0; position: relative; }
@@ -204,12 +204,12 @@ BASE_CSS = HEADER_CSS + """
   .search { margin-left: auto; width: 10rem; padding: 0 0 .15rem; border: 0; border-bottom: 1px solid #333;
             border-radius: 0; background: none; color: #fff; font: inherit; font-size: .8rem; outline: none;
             -webkit-appearance: none; appearance: none; }
-  .search::placeholder { color: #555; }
+  .search::placeholder { color: #808080; }
   .search:focus { border-bottom-color: #777; }
   .search::-webkit-search-cancel-button { display: none; }
   /* A menu beside it (the events' venues, the newsfeed's sources), as quiet as the filter: a small arrow
      after it, and white once something's chosen. As wide as what's chosen, where the browser can size it so. */
-  .pick { max-width: 12rem; padding: 0 1.05em 0 0; border: 0; border-radius: 0; color: #666;
+  .pick { max-width: 12rem; padding: 0 1.05em 0 0; border: 0; border-radius: 0; color: #808080;
           background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23666' stroke-width='1.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right center / .6em;
           font: inherit; font-size: .8rem; text-overflow: ellipsis; cursor: pointer; field-sizing: content;
           -webkit-appearance: none; appearance: none; }
@@ -234,7 +234,7 @@ BASE_CSS = HEADER_CSS + """
           font: inherit; font-size: .85rem; cursor: pointer; }
   .more:hover { border-color: #555; color: #fff; }
   .more:focus-visible { outline: 2px solid #888; outline-offset: 2px; }
-  .empty { color: #666; font-size: .9rem; }
+  .empty { color: #808080; font-size: .9rem; }
   /* Back to the top: a quiet arrow in the corner, faded in once the page has been scrolled a screen or so. */
   .to-top { position: fixed; z-index: 2; right: max(1.5rem, env(safe-area-inset-right)); bottom: max(1.5rem, env(safe-area-inset-bottom));
             display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; border: 1px solid #262626;
@@ -246,7 +246,7 @@ BASE_CSS = HEADER_CSS + """
   @media (max-width: 34rem) { .to-top { right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); } }
   a { color: #fff; text-decoration: none; }
   a:hover { text-decoration: underline; }
-  footer { margin-top: 4rem; color: #666; font-size: .8em; }
+  footer { margin-top: 4rem; color: #808080; font-size: .8em; }
   footer p { margin: .4rem 0; }
   footer a, footer a:visited { color: #999; text-decoration: underline; text-decoration-color: #555; text-underline-offset: .2em; }
   @media (max-width: 34rem) {

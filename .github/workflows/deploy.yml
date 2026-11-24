@@ -7,7 +7,6 @@ name: Build and deploy
 # newsfeed comes from the repo's own settings (Settings → Secrets and variables → Actions), which a copy
 # doesn't inherit:
 #   SITE_URL    (variable) where it's published, for a domain of your own. Without it, GitHub Pages' own address.
-#   EVENTS_URL  (variable) a sister site to name in the header beside it. Without it, the header names only this.
 #   YOUTUBE_KEY (secret)   a free YouTube Data API key, for a channel whose feed won't load.
 on:
   push:
@@ -41,7 +40,6 @@ jobs:
       - run: python3 -m news.build
         env:
           SITE_URL: ${{ vars.SITE_URL }}
-          EVENTS_URL: ${{ vars.EVENTS_URL }}
           YOUTUBE_KEY: ${{ secrets.YOUTUBE_KEY }}
       - uses: actions/upload-pages-artifact@v4
         with:

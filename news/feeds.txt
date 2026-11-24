@@ -11,8 +11,9 @@
 
 # News
 # Its homepage turns away automated requests (403 since Sept 2026), so name the feed itself.
-https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml   The New York Times
-https://feeds.bbci.co.uk/news/rss.xml   BBC News   limit=8
+https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml   NYTimes
+# Free to read, unlike the BBC's, which is paywalled outside the UK.
+https://www.theguardian.com/us-news/rss   The Guardian   limit=8
 https://www.propublica.org/     ProPublica
 https://restofworld.org/        Rest of World   days=7
 https://www.404media.co/        404 Media
@@ -52,6 +53,11 @@ https://usa.streetsblog.org/
 https://grist.org/   Grist
 https://humantransit.org/feed   Human Transit   days=30
 
+# Games. Aftermath and Game Developer post several times a day, so only their latest few; Unwinnable's essays
+# are a few a week.
+https://aftermath.site/feed   Aftermath   limit=5
+https://www.gamedeveloper.com/rss.xml   Game Developer   limit=4
+https://unwinnable.com/feed/   Unwinnable   days=7   limit=4
 # Music. Pitchfork's feed titles are only the album or song, so titles=page takes "Artist: Album" from each
 # review. Best New Music (albums) and Best New Track picks are rarer (one or two a week), so they stay a month
 # and carry a BNM or BNT tag; a review in two feeds shows once, tagged. music= links each to Apple Music.
@@ -107,6 +113,20 @@ https://www.youtube.com/feeds/videos.xml?channel_id=UC0intLFzLaudFG-xAvUEO-A   N
 https://www.youtube.com/feeds/videos.xml?channel_id=UCuVLG9pThvBABcYCm7pkNkA   Climate Town   days=60
 https://www.youtube.com/feeds/videos.xml?channel_id=UC6n8I1UDTKP1IWjQMg6_TwA   The B1M   days=21
 https://www.youtube.com/feeds/videos.xml?channel_id=UCUyvQV2JsICeLZP4c_h40kA   Thomas Flight   days=60
+# Video essays: each posts every month or two, a few less often, so each keeps that long.
+https://www.youtube.com/feeds/videos.xml?channel_id=UCeTfBygNb1TahcNpZyELO8g   Jacob Geller   days=60
+https://www.youtube.com/feeds/videos.xml?channel_id=UCyNtlmLB73-7gtlBz00XOQQ   Folding Ideas   days=90
+https://www.youtube.com/feeds/videos.xml?channel_id=UCJkMlOu7faDgqh4PfzbpLdg   Nerdwriter   days=60
+https://www.youtube.com/feeds/videos.xml?channel_id=UCF1fG3gT44nGTPU2sVLoFWg   Patrick H Willems   days=45
+https://www.youtube.com/feeds/videos.xml?channel_id=UCVo63lbKHjC04KqYhwSZ_Pg   Defunctland   days=45
+https://www.youtube.com/feeds/videos.xml?channel_id=UC2PA-AKmVpU6NKCGtZq_rKQ   Philosophy Tube   days=60
+https://www.youtube.com/feeds/videos.xml?channel_id=UCl_dlV_7ofr4qeP1drJQ-qg   Tantacrul   days=60
+https://www.youtube.com/feeds/videos.xml?channel_id=UCnkp4xDOwqqJD7sSM3xdUiQ   Adam Neely   days=45
+https://www.youtube.com/feeds/videos.xml?channel_id=UCaN8DZdc8EHo5y1LsQWMiig   Big Joel   days=60
+# Games' documentaries and investigations, and how everyday machines work; each every month or few.
+https://www.youtube.com/feeds/videos.xml?channel_id=UC0fDG3byEcMtbOqPMymDNbw   Noclip   days=60
+https://www.youtube.com/feeds/videos.xml?channel_id=UCZB6V9fUov0Mx_us3MWWILg   People Make Games   days=90
+https://www.youtube.com/feeds/videos.xml?channel_id=UCy0tKL1T7wFoYcxCe0xjN6Q   Technology Connections   days=60
 
 # Added from the sources page
 https://www.theverge.com/ The Verge
