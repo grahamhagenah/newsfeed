@@ -74,8 +74,25 @@ def png(size, rows):
     )
 
 
-# Tab icon: the green period alone, filling the square (a "background" whose corners make it a circle).
-(OUT / "favicon-32.png").write_bytes(png(32, draw(32, .5, [(lambda x, y: True, GREEN)])))
+def dot(size, radius):
+    """The green period alone, a circle radius across (in 0..1 units) in the middle of a clear square, its edge
+    smoothed by how much of each pixel it covers."""
+    rows = []
+    n = SAMPLES * SAMPLES
+    for py in range(size):
+        row = bytearray()
+        for px in range(size):
+            covered = sum(((px + (sx + .5) / SAMPLES) / size - .5) ** 2 + ((py + (sy + .5) / SAMPLES) / size - .5) ** 2 <= radius ** 2
+                          for sy in range(SAMPLES) for sx in range(SAMPLES))
+            row += bytes(GREEN) + bytes((round(255 * covered / n),))
+        rows.append(bytes(row))
+    return rows
+
+
+# Tab icon: the green period alone, about two thirds of the tab's square across, with room around it, as a tab's
+# other icons have; filling the square, it stood out larger than any of them.
+DOT = .32  # Its radius, of the square's width. favicon.svg's circle is the same: r="32" in a 100 box.
+(OUT / "favicon-32.png").write_bytes(png(32, dot(32, DOT)))
 print("wrote favicon-32.png")
 
 # Home-screen icons: square (the OS rounds the corners), the mark kept inside the central safe zone.

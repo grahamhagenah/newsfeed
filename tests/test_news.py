@@ -388,6 +388,25 @@ class Fallback(unittest.TestCase):
         self.assertEqual(build.restored(json.loads(json.dumps(build.saved(post)))), post)
 
 
+class Episodes(unittest.TestCase):
+    def test_length_from_itunes_duration_however_written(self):
+        entry = lambda said: build.ET.fromstring(f'<item xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">'
+                                                  f'<itunes:duration>{said}</itunes:duration></item>')
+        self.assertEqual(build.entry_duration(entry("1:02:03")), 3723)
+        self.assertEqual(build.entry_duration(entry("62:03")), 3723)
+        self.assertEqual(build.entry_duration(entry("3723")), 3723)
+        self.assertIsNone(build.entry_duration(entry("about an hour")))
+        self.assertEqual([build.episode_length(s) for s in (3723, 2880, 3600, 20)], ["1h 2m", "48m", "1h", "1m"])
+
+    def test_picture_its_own_else_its_shows(self):
+        show = build.ET.fromstring('<channel xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">'
+                                   '<itunes:image href="https://example.com/show.jpg"/></channel>')
+        own = build.ET.fromstring('<item xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">'
+                                  '<itunes:image href="https://example.com/episode.jpg"/></item>')
+        self.assertEqual(build.entry_artwork(own, show), "https://example.com/episode.jpg")
+        self.assertEqual(build.entry_artwork(build.ET.fromstring("<item/>"), show), "https://example.com/show.jpg")
+
+
 class Page(unittest.TestCase):
     def test_renders_posts_filter_and_failures(self):
         with mock.patch.object(build, "fetch", sample):
@@ -396,8 +415,10 @@ class Page(unittest.TestCase):
         posts = build.all_posts(feeds)
         page = build.render_index(feeds, posts, ["Broken Blog"], [("Slow Site", datetime.now(timezone.utc))], datetime.now(timezone.utc))
         self.assertEqual(page.count('<span class="source">'), len(posts))
-        self.assertEqual(len(re.findall(r'<li class="row" data-from="[^"]*" data-podcast data-audio="https?://[^"]+">', page)),
-                         sum(post["podcast"] for post in posts), "each episode with its audio, to play here")
+        self.assertEqual(len(re.findall(r'<li class="row" data-from="[^"]*" data-podcast data-audio="https?://[^"]+"'
+                                        r' data-art="https?://[^"]+" data-duration="\d+">', page)),
+                         sum(post["podcast"] for post in posts), "each episode with its audio, picture and length, to play here")
+        self.assertIn('<span class="length">3h 4m</span>', page, "an episode's length, after how long ago it was posted")
         # Its page stays a link beside its name, which plays it; and the player's bar is on the page, unseen till then.
         self.assertEqual(page.count('">Apple Podcasts</a>') + page.count('">Episode page</a>'),
                          sum(post["podcast"] and post["link"] != post["audio"] for post in posts), "where it has a page")

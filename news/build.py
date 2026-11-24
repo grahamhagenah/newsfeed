@@ -297,6 +297,27 @@ def entry_audio(entry):
     return None
 
 
+def entry_artwork(entry, show):
+    """An episode's picture, for the player and a phone's lock screen: its own <itunes:image href>, else its
+    show's, else the show's RSS <image><url>."""
+    for element in children(entry, "image") + children(show, "image"):
+        found = element.get("href") or child_text(element, "url")
+        if found and found.startswith("http"):
+            return found.strip()
+    return None
+
+
+def entry_duration(entry):
+    """How long an episode runs, in seconds, from its <itunes:duration>: "1:02:03", "62:03" or "3723"."""
+    said = (child_text(entry, "duration") or "").strip()
+    if not re.fullmatch(r"\d+(?::\d{1,2}){0,2}", said):
+        return None
+    seconds = 0
+    for part in said.split(":"):
+        seconds = seconds * 60 + int(part)
+    return seconds or None
+
+
 # A YouTube video's address, and its id. Shorts, at youtube.com/shorts/…, aren't among them: they're left out.
 YOUTUBE_VIDEO = re.compile(r"^https://(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([\w-]{11})")
 
@@ -414,6 +435,9 @@ def read_feed(site):
                 "comment_count": comment_count,
                 "audio": audio,
                 "podcast": audio is not None,
+                # An episode's picture and length, for the player and the list.
+                "art": entry_artwork(entry, meta) if audio else None,
+                "duration": entry_duration(entry) if audio else None,
                 "video": video.group(1) if video else None,  # A YouTube video's id, for playing it here.
                 "reddit": reddit,  # A subreddit's post, which has a mark and a filter of its own.
                 "tag": site["tag"],
@@ -755,16 +779,29 @@ def render_tag(tag):
             f'<span aria-hidden="true">{html.escape(tag)}</span></span>')
 
 
+def episode_length(seconds):
+    """How long an episode runs, as the list says it: "1h 12m", "48m", "1h"."""
+    hours, minutes = divmod(round(seconds / 60), 60)
+    return f"{hours}h {minutes}m" if hours and minutes else f"{hours}h" if hours else f"{max(minutes, 1)}m"
+
+
 def render_index(feeds, posts, failed, stale, built_at):
     items = []
     for post in posts:
         when = render_time(post["date"]) if post["date"] else ""
+        # An episode's length after how long ago it was posted ("1h 12m"), which the page's script turns into what's
+        # left of it ("23m left") where it was started here.
+        if post["podcast"] and post.get("duration"):
+            when += f' <span class="length">{episode_length(post["duration"])}</span>'
         # A subreddit's post is Reddit's whatever it shares; a video it shares still plays here.
         kind = "reddit" if post.get("reddit") else "podcast" if post["podcast"] else "video" if post.get("video") else "article"
         mark = icon(kind)
         marked = " data-podcast" if post["podcast"] else f' data-video="{post["video"]}"' if post.get("video") else ""
         # An episode plays here, in the bar at the foot of the page (LISTEN), from its audio file.
-        marked += f' data-audio="{html.escape(post["audio"], quote=True)}"' if post["podcast"] and post.get("audio") else ""
+        if post["podcast"] and post.get("audio"):
+            marked += f' data-audio="{html.escape(post["audio"], quote=True)}"'
+            marked += f' data-art="{html.escape(post["art"], quote=True)}"' if post.get("art") else ""
+            marked += f' data-duration="{post["duration"]}"' if post.get("duration") else ""
         marked += " data-reddit" if post.get("reddit") else ""
         preview = shared.preview(post["title"], post["summary"])
         tag = render_tag(post.get("tag"))
@@ -846,7 +883,7 @@ PLAYER = """<dialog class="player" aria-label="Video">
 # back 15 seconds, play or pause, ahead 30, where it's at, its speed, and a way to close it.
 LISTEN = """<section class="listen" aria-label="Podcast player" hidden>
 <audio preload="metadata"></audio>
-<div class="listen-said"><span class="listen-title"></span><span class="listen-show"></span></div>
+<div class="listen-said"><img class="listen-art" alt="" hidden><span class="listen-words"><span class="listen-title"></span><span class="listen-show"></span></span></div>
 <div class="listen-keys">
 <button class="listen-back" type="button" aria-label="Back 15 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M6.5 2.75v4h4"/><text x="12" y="15.5">15</text></svg></button>
 <button class="listen-toggle" type="button" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="listen-play" d="M8 5.5v13l10.5-6.5z"/><path class="listen-pause" d="M8.5 5.5v13M15.5 5.5v13"/></svg></button>
@@ -1075,7 +1112,57 @@ INDEX_JS = """
     if (isFinite(length) && length - at < 30) delete positions[current.src];
     else if (at > 5) positions[current.src] = Math.floor(at);
     savePositions();
+    showHeard();
   };
+  // What's playing, kept in this browser too, so a reload (the page's own, after time away, or new posts loaded)
+  // puts it back in the bar, paused where it was.
+  const keepNow = () => { try { current ? localStorage.setItem("listen-now", JSON.stringify(current)) : localStorage.removeItem("listen-now"); } catch (error) {} };
+  // Each episode's length in the list turns into what's left of it once it's been started, with a line under its
+  // row for how much has been heard.
+  function showHeard() {
+    for (const li of document.querySelectorAll(".posts li[data-audio]")) {
+      const length = +li.dataset.duration || (current && current.src === li.dataset.audio && listen.duration) || 0;
+      const at = positions[li.dataset.audio], said = li.querySelector(".length");
+      if (at && length > at) {
+        li.dataset.heard = "";
+        li.style.setProperty("--heard", (100 * at / length).toFixed(1) + "%");
+        if (said) {
+          // As its length was said ("2h 59m"), now of what's left.
+          const minutes = Math.max(1, Math.round((length - at) / 60)), h = Math.floor(minutes / 60), m = minutes % 60;
+          said.textContent = (h && m ? h + "h " + m + "m" : h ? h + "h" : m + "m") + " left";
+          said.classList.add("started");
+        }
+      } else {
+        delete li.dataset.heard;
+        if (said && said.dataset.length) { said.textContent = said.dataset.length; said.classList.remove("started"); }
+      }
+    }
+  }
+  for (const said of document.querySelectorAll(".posts .length")) said.dataset.length = said.textContent;
+  function load(episode, start) {
+    current = episode;
+    document.querySelectorAll(".posts li.now-playing").forEach(row => row.classList.remove("now-playing"));
+    document.querySelectorAll(".posts li[data-audio]").forEach(row => { if (row.dataset.audio === episode.src) row.classList.add("now-playing"); });
+    bar_.querySelector(".listen-title").textContent = episode.title;
+    bar_.querySelector(".listen-show").textContent = episode.show;
+    const art = bar_.querySelector(".listen-art");
+    art.hidden = !episode.art;
+    if (episode.art) art.src = episode.art; else art.removeAttribute("src");
+    listenNote.hidden = true;
+    listenNote.querySelector("a").href = episode.page;
+    bar_.hidden = false;
+    document.body.classList.add("listening");
+    listen.src = episode.src;
+    showSpeed();
+    const from = positions[episode.src];
+    listen.addEventListener("loadedmetadata", () => { if (from) listen.currentTime = from; showTime(); }, { once: true });
+    if (start) listen.play().catch(() => {});
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: episode.title, artist: episode.show, album: "Newsfeed",
+        artwork: episode.art ? [{ src: episode.art, sizes: "512x512" }] : [] });
+    }
+    keepNow();
+  }
   function listenTo(a) {
     const li = a.closest("li");
     const src = li.dataset.audio;
@@ -1085,23 +1172,7 @@ INDEX_JS = """
     }
     remember();
     if (dialog.open) dialog.close();  // One thing playing at a time.
-    document.querySelectorAll(".posts li.now-playing").forEach(row => row.classList.remove("now-playing"));
-    li.classList.add("now-playing");
-    current = { src, title: a.textContent, show: li.dataset.from || "", page: a.href };
-    bar_.querySelector(".listen-title").textContent = current.title;
-    bar_.querySelector(".listen-show").textContent = current.show;
-    listenNote.hidden = true;
-    listenNote.querySelector("a").href = current.page;
-    bar_.hidden = false;
-    document.body.classList.add("listening");
-    listen.src = src;
-    showSpeed();
-    const from = positions[src];
-    listen.addEventListener("loadedmetadata", () => { if (from) listen.currentTime = from; showTime(); }, { once: true });
-    listen.play().catch(() => {});
-    if ("mediaSession" in navigator) {
-      navigator.mediaSession.metadata = new MediaMetadata({ title: current.title, artist: current.show, album: "Newsfeed" });
-    }
+    load({ src, title: a.textContent, show: li.dataset.from || "", page: a.href, art: li.dataset.art || "" }, true);
   }
   for (const a of links) {
     if (!a.closest("li").dataset.audio) continue;
@@ -1168,9 +1239,25 @@ INDEX_JS = """
     listen.removeAttribute("src");
     listen.load();
     current = null;
+    keepNow();
     bar_.hidden = true;
     document.body.classList.remove("listening");
     document.querySelectorAll(".posts li.now-playing").forEach(row => row.classList.remove("now-playing"));
+  });
+  // What was playing before the page was reloaded, back in the bar, paused where it was; and what's been heard.
+  try {
+    const before = JSON.parse(localStorage.getItem("listen-now") || "null");
+    if (before && before.src) load(before, false);
+  } catch (error) {}
+  showHeard();
+  // With the bar open, and the keyboard not in a field or on a button: space plays or pauses, and the arrows go
+  // back 15 seconds and ahead 30.
+  document.addEventListener("keydown", event => {
+    if (bar_.hidden || event.metaKey || event.ctrlKey || event.altKey) return;
+    if (event.target.closest("input, textarea, select, button, [contenteditable]") || (dialog.open && dialog.contains(event.target))) return;
+    if (event.key === " ") { event.preventDefault(); listen.paused ? listen.play().catch(() => {}) : listen.pause(); }
+    else if (event.key === "ArrowLeft") { event.preventDefault(); skip(-15); }
+    else if (event.key === "ArrowRight") { event.preventDefault(); skip(30); }
   });
   if ("mediaSession" in navigator) {
     const handle = (action, run) => { try { navigator.mediaSession.setActionHandler(action, run); } catch (error) {} };
@@ -1186,7 +1273,8 @@ INDEX_JS = """
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) hiddenAt = Date.now();
-    else if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000) location.reload();
+    // Not while a podcast plays: it would stop it, coming back to the page after a while with the phone locked.
+    else if (hiddenAt && Date.now() - hiddenAt > 5 * 60 * 1000 && listen.paused) location.reload();
   });
 
   // While the page is on screen, check every two minutes whether a newer build has posts this page
@@ -1768,7 +1856,17 @@ CSS = """
   body.listening { --listen: 4.5rem; padding-bottom: var(--listen); }
   body.listening .to-top { bottom: calc(var(--listen) + 1rem); }
   body.listening.video-corner .to-top { bottom: calc(var(--listen) + 4.25rem + min(26rem, 100vw - 2rem) * 0.5625); }
-  .listen-said { display: grid; min-width: 0; line-height: 1.3; }
+  .listen-said { display: flex; align-items: center; gap: .75rem; min-width: 0; line-height: 1.3; }
+  .listen-words { display: grid; min-width: 0; }
+  /* The show's picture, beside what's playing. */
+  .listen-art { flex: none; width: 2.75rem; height: 2.75rem; border-radius: 6px; object-fit: cover; background: #1a1a1a; }
+  .listen-art[hidden] { display: none; }
+  /* An episode's length in the list, and once it's been started here, what's left of it, in the podcasts' purple,
+     with a line under the row for how much has been heard. */
+  .length { margin-left: .45em; color: #808080; font-size: .85rem; white-space: nowrap; }
+  .length.started { color: var(--podcast); }
+  .posts li[data-heard] { background: linear-gradient(to right, rgba(167, 139, 250, .5) var(--heard), transparent var(--heard))
+                                      no-repeat left bottom / 100% 2px; }
   .listen-title { overflow: hidden; color: #fff; font-size: .95rem; white-space: nowrap; text-overflow: ellipsis; }
   .listen-show { overflow: hidden; color: #808080; font-size: .8rem; white-space: nowrap; text-overflow: ellipsis; }
   .listen-keys { display: flex; align-items: center; gap: .25rem; }
