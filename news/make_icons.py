@@ -1,5 +1,6 @@
-"""Draw the icons in static/ (a white "n" and a green period on black, the logo's "newsfeed." in short) as PNGs,
-with no dependencies. Run once after changing the design; favicon.svg is the same drawing."""
+"""Draw the icons in static/ as PNGs, with no dependencies: the home-screen icons a white "n" and a green period on
+black, the logo's "newsfeed." in short, and the tab icon the period alone. Run once after changing the design;
+favicon.svg is the tab icon's same drawing."""
 
 import struct
 import zlib
@@ -73,13 +74,11 @@ def png(size, rows):
     )
 
 
-# Home-screen icons: square (the OS rounds the corners), the mark kept inside the central safe zone. Tab icon:
-# a rounded square, the mark larger so it reads at 16–32px.
-for name, size, corner, scale in [
-    ("favicon-32.png", 32, 0.22, 1),
-    ("apple-touch-icon.png", 180, 0, .72),
-    ("icon-192.png", 192, 0, .72),
-    ("icon-512.png", 512, 0, .72),
-]:
-    (OUT / name).write_bytes(png(size, draw(size, corner, mark(scale))))
+# Tab icon: the green period alone, filling the square (a "background" whose corners make it a circle).
+(OUT / "favicon-32.png").write_bytes(png(32, draw(32, .5, [(lambda x, y: True, GREEN)])))
+print("wrote favicon-32.png")
+
+# Home-screen icons: square (the OS rounds the corners), the mark kept inside the central safe zone.
+for name, size in [("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512)]:
+    (OUT / name).write_bytes(png(size, draw(size, 0, mark(.72))))
     print("wrote", name)
