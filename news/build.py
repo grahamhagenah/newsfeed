@@ -1117,15 +1117,12 @@ INDEX_JS = """
   // What's playing, kept in this browser too, so a reload (the page's own, after time away, or new posts loaded)
   // puts it back in the bar, paused where it was.
   const keepNow = () => { try { current ? localStorage.setItem("listen-now", JSON.stringify(current)) : localStorage.removeItem("listen-now"); } catch (error) {} };
-  // Each episode's length in the list turns into what's left of it once it's been started, with a line under its
-  // row for how much has been heard.
+  // Each episode's length in the list turns into what's left of it once it's been started.
   function showHeard() {
     for (const li of document.querySelectorAll(".posts li[data-audio]")) {
       const length = +li.dataset.duration || (current && current.src === li.dataset.audio && listen.duration) || 0;
       const at = positions[li.dataset.audio], said = li.querySelector(".length");
       if (at && length > at) {
-        li.dataset.heard = "";
-        li.style.setProperty("--heard", (100 * at / length).toFixed(1) + "%");
         if (said) {
           // As its length was said ("2h 59m"), now of what's left.
           const minutes = Math.max(1, Math.round((length - at) / 60)), h = Math.floor(minutes / 60), m = minutes % 60;
@@ -1133,7 +1130,6 @@ INDEX_JS = """
           said.classList.add("started");
         }
       } else {
-        delete li.dataset.heard;
         if (said && said.dataset.length) { said.textContent = said.dataset.length; said.classList.remove("started"); }
       }
     }
@@ -1861,12 +1857,9 @@ CSS = """
   /* The show's picture, beside what's playing. */
   .listen-art { flex: none; width: 2.75rem; height: 2.75rem; border-radius: 6px; object-fit: cover; background: #1a1a1a; }
   .listen-art[hidden] { display: none; }
-  /* An episode's length in the list, and once it's been started here, what's left of it, in the podcasts' purple,
-     with a line under the row for how much has been heard. */
+  /* An episode's length in the list, and once it's been started here, what's left of it, in the podcasts' purple. */
   .length { margin-left: .45em; color: #808080; font-size: .85rem; white-space: nowrap; }
   .length.started { color: var(--podcast); }
-  .posts li[data-heard] { background: linear-gradient(to right, rgba(167, 139, 250, .5) var(--heard), transparent var(--heard))
-                                      no-repeat left bottom / 100% 2px; }
   .listen-title { overflow: hidden; color: #fff; font-size: .95rem; white-space: nowrap; text-overflow: ellipsis; }
   .listen-show { overflow: hidden; color: #808080; font-size: .8rem; white-space: nowrap; text-overflow: ellipsis; }
   .listen-keys { display: flex; align-items: center; gap: .25rem; }
