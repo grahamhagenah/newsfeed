@@ -396,7 +396,13 @@ class Page(unittest.TestCase):
         posts = build.all_posts(feeds)
         page = build.render_index(feeds, posts, ["Broken Blog"], [("Slow Site", datetime.now(timezone.utc))], datetime.now(timezone.utc))
         self.assertEqual(page.count('<span class="source">'), len(posts))
-        self.assertEqual(len(re.findall(r'<li class="row" data-from="[^"]*" data-podcast>', page)), sum(post["podcast"] for post in posts))
+        self.assertEqual(len(re.findall(r'<li class="row" data-from="[^"]*" data-podcast data-audio="https?://[^"]+">', page)),
+                         sum(post["podcast"] for post in posts), "each episode with its audio, to play here")
+        # Its page stays a link beside its name, which plays it; and the player's bar is on the page, unseen till then.
+        self.assertEqual(page.count('">Apple Podcasts</a>') + page.count('">Episode page</a>'),
+                         sum(post["podcast"] and post["link"] != post["audio"] for post in posts), "where it has a page")
+        self.assertIn('<section class="listen" aria-label="Podcast player" hidden>', page)
+        self.assertIn("navigator.mediaSession", page, "the lock screen's and headphones' controls")
         self.assertIn('data-show="podcasts"', page)
         self.assertIn('data-show="videos"', page)
         self.assertEqual(len(re.findall(r'<li class="row" data-from="[^"]*" data-video="', page)), 2)

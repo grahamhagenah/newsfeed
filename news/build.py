@@ -763,6 +763,8 @@ def render_index(feeds, posts, failed, stale, built_at):
         kind = "reddit" if post.get("reddit") else "podcast" if post["podcast"] else "video" if post.get("video") else "article"
         mark = icon(kind)
         marked = " data-podcast" if post["podcast"] else f' data-video="{post["video"]}"' if post.get("video") else ""
+        # An episode plays here, in the bar at the foot of the page (LISTEN), from its audio file.
+        marked += f' data-audio="{html.escape(post["audio"], quote=True)}"' if post["podcast"] and post.get("audio") else ""
         marked += " data-reddit" if post.get("reddit") else ""
         preview = shared.preview(post["title"], post["summary"])
         tag = render_tag(post.get("tag"))
@@ -772,6 +774,11 @@ def render_index(feeds, posts, failed, stale, built_at):
             label = "comments" if count is None else "1 comment" if count == 1 else f"{count} comments"
             comments = f'<a class="comments" href="{html.escape(post["comments"])}">{label}</a>'
         music = f'<a class="comments" href="{html.escape(post["music"])}">Apple Music</a>' if post.get("music") else ""
+        # An episode's name plays it here; its page in Apple Podcasts (or its own) stays a link beside it, for
+        # anyone who'd rather listen there.
+        if post["podcast"] and post.get("audio") and post["link"] != post["audio"]:
+            elsewhere = "Apple Podcasts" if "podcasts.apple.com" in post["link"] else "Episode page"
+            music = f'<a class="comments" href="{html.escape(post["link"])}">{elsewhere}</a>'
         # A phone's row reads as one line, so who it's from goes right after how long ago, before any links:
         # "2d from Pitchfork · Apple Music", not "2d Apple Music from Pitchfork". On desktop the source has its
         # own column at the end of the row, so this copy is hidden there, and that one on phones.
@@ -813,7 +820,7 @@ def render_index(feeds, posts, failed, stale, built_at):
 
     body = (
         show_filter + '<button class="new-posts" hidden></button>\n'
-        + PLAYER +
+        + PLAYER + LISTEN +
         f'<ul class="posts" data-page-size="{PAGE_SIZE}">\n' + "\n".join(items) + "\n</ul>\n"
         '<p class="empty" hidden></p>\n'
         '<nav class="pager" hidden><button class="more" type="button">Load more</button></nav>\n'
@@ -833,6 +840,23 @@ PLAYER = """<dialog class="player" aria-label="Video">
 <div class="player-frame"></div>
 <p class="player-note" hidden>This video can’t be played here. <a href="">Watch it on YouTube</a></p>
 </dialog>
+"""
+
+# Where a podcast episode plays: a bar at the foot of the page, over the list, while it's read. Its title and show,
+# back 15 seconds, play or pause, ahead 30, where it's at, its speed, and a way to close it.
+LISTEN = """<section class="listen" aria-label="Podcast player" hidden>
+<audio preload="metadata"></audio>
+<div class="listen-said"><span class="listen-title"></span><span class="listen-show"></span></div>
+<div class="listen-keys">
+<button class="listen-back" type="button" aria-label="Back 15 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M6.5 2.75v4h4"/><text x="12" y="15.5">15</text></svg></button>
+<button class="listen-toggle" type="button" aria-label="Play"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="listen-play" d="M8 5.5v13l10.5-6.5z"/><path class="listen-pause" d="M8.5 5.5v13M15.5 5.5v13"/></svg></button>
+<button class="listen-ahead" type="button" aria-label="Ahead 30 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M17.5 2.75v4h-4"/><text x="12" y="15.5">30</text></svg></button>
+</div>
+<div class="listen-seek"><span class="listen-at">0:00</span><input class="listen-range" type="range" min="0" max="0" step="1" value="0" aria-label="Where in the episode"><span class="listen-left">0:00</span></div>
+<button class="listen-speed" type="button" aria-label="Speed: 1 times">1×</button>
+<button class="listen-close" type="button" aria-label="Close the player"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
+<p class="listen-note" hidden>This episode won’t play here. <a href="">Open it</a></p>
+</section>
 """
 
 INDEX_JS = """
@@ -994,9 +1018,134 @@ INDEX_JS = """
     a.addEventListener("click", event => {
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       event.preventDefault();
+      listen.pause();  // One thing playing at a time.
       play(a);
     });
   }
+
+  // Podcast episodes play here too, in a bar at the foot of the page, from their own audio files, while the list
+  // is read: back 15 seconds and ahead 30, a speed that's kept, and on a phone, the lock screen's and headphones'
+  // controls. Where each episode was left is kept in this browser, so it starts there again. A click with a
+  // modifier key still opens the episode's page, as its link beside it does.
+  const bar_ = document.querySelector(".listen");
+  const listen = bar_.querySelector("audio");
+  const range = bar_.querySelector(".listen-range");
+  const toggle = bar_.querySelector(".listen-toggle");
+  const speedButton = bar_.querySelector(".listen-speed");
+  const listenNote = bar_.querySelector(".listen-note");
+  const SPEEDS = [1, 1.25, 1.5, 2];
+  let speed = 1, positions = {}, current = null, seeking = false;
+  try { speed = SPEEDS.includes(+localStorage.getItem("listen-speed")) ? +localStorage.getItem("listen-speed") : 1; } catch (error) {}
+  try { positions = JSON.parse(localStorage.getItem("listen-positions") || "{}"); } catch (error) {}
+  const savePositions = () => { try { localStorage.setItem("listen-positions", JSON.stringify(positions)); } catch (error) {} };
+  const clock = seconds => {
+    if (!isFinite(seconds) || seconds < 0) seconds = 0;
+    const h = Math.floor(seconds / 3600), m = Math.floor(seconds % 3600 / 60), s = Math.floor(seconds % 60);
+    return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0");
+  };
+  const showSpeed = () => {
+    listen.playbackRate = speed;
+    speedButton.textContent = speed + "×";
+    speedButton.setAttribute("aria-label", "Speed: " + speed + " times");
+  };
+  const showTime = () => {
+    const length = listen.duration;
+    if (!seeking) range.value = Math.floor(listen.currentTime);
+    if (isFinite(length)) range.max = Math.floor(length);
+    bar_.querySelector(".listen-at").textContent = clock(listen.currentTime);
+    bar_.querySelector(".listen-left").textContent = isFinite(length) ? "-" + clock(length - listen.currentTime) : "";
+    range.style.setProperty("--done", isFinite(length) && length ? (100 * listen.currentTime / length) + "%" : "0%");
+  };
+  const remember = () => {
+    if (!current) return;
+    const at = listen.currentTime, length = listen.duration;
+    // Near enough the end, it's been heard: it starts over next time.
+    if (isFinite(length) && length - at < 30) delete positions[current.src];
+    else if (at > 5) positions[current.src] = Math.floor(at);
+    savePositions();
+  };
+  function listenTo(a) {
+    const li = a.closest("li");
+    const src = li.dataset.audio;
+    if (current && current.src === src) {  // The one playing: its name pauses it, or plays it on.
+      listen.paused ? listen.play() : listen.pause();
+      return;
+    }
+    remember();
+    if (dialog.open) dialog.close();  // One thing playing at a time.
+    document.querySelectorAll(".posts li.now-playing").forEach(row => row.classList.remove("now-playing"));
+    li.classList.add("now-playing");
+    current = { src, title: a.textContent, show: li.dataset.from || "", page: a.href };
+    bar_.querySelector(".listen-title").textContent = current.title;
+    bar_.querySelector(".listen-show").textContent = current.show;
+    listenNote.hidden = true;
+    listenNote.querySelector("a").href = current.page;
+    bar_.hidden = false;
+    document.body.classList.add("listening");
+    listen.src = src;
+    showSpeed();
+    const from = positions[src];
+    listen.addEventListener("loadedmetadata", () => { if (from) listen.currentTime = from; showTime(); }, { once: true });
+    listen.play().catch(() => {});
+    if ("mediaSession" in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({ title: current.title, artist: current.show, album: "Newsfeed" });
+    }
+  }
+  for (const a of links) {
+    if (!a.closest("li").dataset.audio) continue;
+    a.addEventListener("click", event => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      listenTo(a);
+    });
+  }
+  const skip = seconds => { listen.currentTime = Math.max(0, Math.min(listen.currentTime + seconds, listen.duration || Infinity)); };
+  toggle.addEventListener("click", () => listen.paused ? listen.play().catch(() => {}) : listen.pause());
+  bar_.querySelector(".listen-back").addEventListener("click", () => skip(-15));
+  bar_.querySelector(".listen-ahead").addEventListener("click", () => skip(30));
+  speedButton.addEventListener("click", () => {
+    speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+    showSpeed();
+    try { localStorage.setItem("listen-speed", speed); } catch (error) {}
+  });
+  range.addEventListener("input", () => {
+    seeking = true;
+    bar_.querySelector(".listen-at").textContent = clock(+range.value);
+  });
+  range.addEventListener("change", () => { listen.currentTime = +range.value; seeking = false; });
+  const showPlaying = () => {
+    const on = !listen.paused;
+    bar_.classList.toggle("playing", on);
+    toggle.setAttribute("aria-label", on ? "Pause" : "Play");
+    if ("mediaSession" in navigator) navigator.mediaSession.playbackState = on ? "playing" : "paused";
+  };
+  listen.addEventListener("play", showPlaying);
+  listen.addEventListener("pause", () => { showPlaying(); remember(); });
+  listen.addEventListener("ended", () => { showPlaying(); remember(); });
+  listen.addEventListener("timeupdate", showTime);
+  listen.addEventListener("durationchange", showTime);
+  let lastKept = 0;
+  listen.addEventListener("timeupdate", () => { if (Date.now() - lastKept > 5000) { lastKept = Date.now(); remember(); } });
+  listen.addEventListener("error", () => { if (current) listenNote.hidden = false; });
+  bar_.querySelector(".listen-close").addEventListener("click", () => {
+    remember();
+    listen.pause();
+    listen.removeAttribute("src");
+    listen.load();
+    current = null;
+    bar_.hidden = true;
+    document.body.classList.remove("listening");
+    document.querySelectorAll(".posts li.now-playing").forEach(row => row.classList.remove("now-playing"));
+  });
+  if ("mediaSession" in navigator) {
+    const handle = (action, run) => { try { navigator.mediaSession.setActionHandler(action, run); } catch (error) {} };
+    handle("play", () => listen.play());
+    handle("pause", () => listen.pause());
+    handle("seekbackward", details => skip(-(details.seekOffset || 15)));
+    handle("seekforward", details => skip(details.seekOffset || 30));
+    handle("seekto", details => { listen.currentTime = details.seekTime; });
+  }
+  addEventListener("pagehide", remember);
 
   // Opened from the home screen there's no pull-to-refresh, so reload on return after five minutes away.
   let hiddenAt = 0;
@@ -1572,6 +1721,76 @@ CSS = """
   }
   /* The way back to the top sits where the video now is, so it steps up over it. */
   body.video-corner .to-top { bottom: calc(4.25rem + min(26rem, 100vw - 2rem) * 0.5625); }  /* Over the bar too. */
+  /* A podcast's bar at the foot of the window, as wide as the list over it: what's playing, its keys, where it's at,
+     its speed and a way to close it, on one line on a wide screen and two on a phone. The page keeps room under
+     its last row for it, and the way back to the top steps up over it. */
+  .listen { position: fixed; z-index: 4; left: 0; right: 0; bottom: 0; box-sizing: border-box;
+            padding: .6rem max(1rem, calc((100vw - 52rem) / 2)) calc(.6rem + env(safe-area-inset-bottom));
+            display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(9rem, 1.3fr) auto auto;
+            align-items: center; gap: .4rem 1rem; border-top: 1px solid #2a2a2a; background: rgba(12, 12, 12, .97);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+  .listen[hidden] { display: none; }
+  body.listening { --listen: 4.5rem; padding-bottom: var(--listen); }
+  body.listening .to-top { bottom: calc(var(--listen) + 1rem); }
+  body.listening.video-corner .to-top { bottom: calc(var(--listen) + 4.25rem + min(26rem, 100vw - 2rem) * 0.5625); }
+  .listen-said { display: grid; min-width: 0; line-height: 1.3; }
+  .listen-title { overflow: hidden; color: #fff; font-size: .95rem; white-space: nowrap; text-overflow: ellipsis; }
+  .listen-show { overflow: hidden; color: #808080; font-size: .8rem; white-space: nowrap; text-overflow: ellipsis; }
+  .listen-keys { display: flex; align-items: center; gap: .25rem; }
+  .listen button { display: grid; place-items: center; padding: 0; border: 0; background: none; color: #aaa;
+                   font: inherit; cursor: pointer; }
+  .listen button:hover, .listen button:focus-visible { color: #fff; outline: none; }
+  .listen-back, .listen-ahead { width: 2.25rem; height: 2.25rem; }
+  .listen-back svg, .listen-ahead svg { width: 1.45rem; height: 1.45rem; fill: none; stroke: currentColor;
+                                        stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .listen-back text, .listen-ahead text { fill: currentColor; stroke: none; font: 600 7px/1 system-ui, sans-serif;
+                                          text-anchor: middle; }
+  /* Play and pause: a white disc, the episode's own button, as the podcast's mark is the page's purple. */
+  .listen-toggle { width: 2.6rem; height: 2.6rem; border-radius: 50%; background: #fff !important; color: #000 !important; }
+  .listen-toggle svg { width: 1.2rem; height: 1.2rem; }
+  .listen-play { fill: currentColor; }
+  .listen-pause { display: none; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+  .listen.playing .listen-play { display: none; }
+  .listen.playing .listen-pause { display: inline; }
+  .listen-toggle:focus-visible { box-shadow: 0 0 0 2px #000, 0 0 0 4px var(--podcast); }
+  .listen-seek { display: flex; align-items: center; gap: .6rem; min-width: 0; color: #808080; font-size: .75rem;
+                 font-variant-numeric: tabular-nums; }
+  .listen-at, .listen-left { flex: none; min-width: 2.6rem; }
+  .listen-left { text-align: right; }
+  /* Where it's at: a thin line, the heard part in the podcasts' purple, and a dot to take hold of. */
+  .listen-range { flex: 1; min-width: 0; height: 1.25rem; margin: 0; background: none; cursor: pointer;
+                  -webkit-appearance: none; appearance: none; }
+  .listen-range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px;
+    background: linear-gradient(to right, var(--podcast) var(--done, 0%), #333 var(--done, 0%)); }
+  .listen-range::-moz-range-track { height: 4px; border-radius: 2px; background: #333; }
+  .listen-range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--podcast); }
+  .listen-range::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; margin-top: -4px;
+                                        border-radius: 50%; background: #fff; }
+  .listen-range::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: #fff; }
+  .listen-range:focus-visible { outline: none; }
+  .listen-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(167, 139, 250, .5); }
+  .listen-speed { min-width: 2.75rem; height: 1.75rem; padding: 0 .4rem !important; border: 1px solid #2a2a2a !important;
+                  border-radius: 999px; font-size: .8rem !important; font-variant-numeric: tabular-nums; }
+  .listen-close { width: 2rem; height: 2rem; }
+  .listen-close svg { width: .9rem; height: .9rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
+  .listen-note { grid-column: 1 / -1; margin: 0; color: #aaa; font-size: .85rem; }
+  .listen-note a { color: #fff; }
+  /* The episode playing, in the list: its name in the podcasts' purple. */
+  .posts li.now-playing a.title { color: var(--podcast); }
+  @media (max-width: 34rem) {
+    /* A phone: what's playing and the way to close it on top, the keys, where it's at and its speed under it. */
+    .listen { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "said said close" "keys seek speed";
+              gap: .35rem .6rem; padding-top: .55rem; }
+    body.listening { --listen: 7rem; }
+    .listen-said { grid-area: said; }
+    .listen-close { grid-area: close; }
+    .listen-keys { grid-area: keys; }
+    .listen-seek { grid-area: seek; gap: .4rem; }
+    .listen-speed { grid-area: speed; }
+    .listen-at, .listen-left { min-width: 2.2rem; }
+  }
+  @media (prefers-reduced-motion: no-preference) { .listen:not([hidden]) { animation: listen-in .2s ease-out; } }
+  @keyframes listen-in { from { transform: translateY(100%); } }
   @media (max-width: 34rem) {
     /* A phone: the bar deep enough for a thumb, its buttons with it, and the way back to the top above them. */
     .player.corner .player-bar { height: 2.4rem; }
