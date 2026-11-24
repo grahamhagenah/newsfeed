@@ -1778,16 +1778,27 @@ CSS = """
   /* The episode playing, in the list: its name in the podcasts' purple. */
   .posts li.now-playing a.title { color: var(--podcast); }
   @media (max-width: 34rem) {
-    /* A phone: what's playing and the way to close it on top, the keys, where it's at and its speed under it. */
-    .listen { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "said said close" "keys seek speed";
-              gap: .35rem .6rem; padding-top: .55rem; }
-    body.listening { --listen: 7rem; }
+    /* A phone: what's playing and the way to close it on top; where it's at across the whole width under it; and
+       the keys under that, big enough for a thumb and in the middle, with its speed to their left. */
+    .listen { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+              grid-template-areas: "said said close" "seek seek seek" "speed keys .";
+              gap: .5rem .75rem; padding-top: .75rem; padding-bottom: calc(.75rem + env(safe-area-inset-bottom)); }
+    body.listening { --listen: 10.5rem; }
     .listen-said { grid-area: said; }
-    .listen-close { grid-area: close; }
-    .listen-keys { grid-area: keys; }
-    .listen-seek { grid-area: seek; gap: .4rem; }
-    .listen-speed { grid-area: speed; }
-    .listen-at, .listen-left { min-width: 2.2rem; }
+    .listen-title { font-size: 1rem; }
+    .listen-show { font-size: .85rem; }
+    .listen-close { grid-area: close; justify-self: end; width: 2.75rem; height: 2.75rem; margin: -.4rem -.6rem 0 0; }
+    .listen-close svg { width: 1.05rem; height: 1.05rem; }
+    .listen-seek { grid-area: seek; gap: .75rem; font-size: .8rem; }
+    .listen-range { height: 1.75rem; }
+    .listen-range::-webkit-slider-thumb { width: 16px; height: 16px; margin-top: -6px; }
+    .listen-range::-moz-range-thumb { width: 16px; height: 16px; }
+    .listen-keys { grid-area: keys; gap: 1.5rem; }
+    .listen-back, .listen-ahead { width: 3rem; height: 3rem; }
+    .listen-back svg, .listen-ahead svg { width: 1.9rem; height: 1.9rem; }
+    .listen-toggle { width: 3.6rem; height: 3.6rem; }
+    .listen-toggle svg { width: 1.5rem; height: 1.5rem; }
+    .listen-speed { grid-area: speed; justify-self: start; min-width: 3.25rem; height: 2.25rem; font-size: .9rem !important; }
   }
   @media (prefers-reduced-motion: no-preference) { .listen:not([hidden]) { animation: listen-in .2s ease-out; } }
   @keyframes listen-in { from { transform: translateY(100%); } }
