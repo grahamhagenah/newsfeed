@@ -403,6 +403,8 @@ class Page(unittest.TestCase):
                          sum(post["podcast"] and post["link"] != post["audio"] for post in posts), "where it has a page")
         self.assertIn('<section class="listen" aria-label="Podcast player" hidden>', page)
         self.assertIn("navigator.mediaSession", page, "the lock screen's and headphones' controls")
+        speeds = page.split('<div class="listen-speeds" role="menu" aria-label="Speed" hidden>')[1].split("</div>")[0]
+        self.assertEqual(re.findall(r'data-speed="([\d.]+)"', speeds), ["0.75", "1", "1.25", "1.5", "1.75", "2"], "its speeds, in a menu")
         self.assertIn('data-show="podcasts"', page)
         self.assertIn('data-show="videos"', page)
         self.assertEqual(len(re.findall(r'<li class="row" data-from="[^"]*" data-video="', page)), 2)

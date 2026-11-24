@@ -853,7 +853,17 @@ LISTEN = """<section class="listen" aria-label="Podcast player" hidden>
 <button class="listen-ahead" type="button" aria-label="Ahead 30 seconds"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M17.5 2.75v4h-4"/><text x="12" y="15.5">30</text></svg></button>
 </div>
 <div class="listen-seek"><span class="listen-at">0:00</span><input class="listen-range" type="range" min="0" max="0" step="1" value="0" aria-label="Where in the episode"><span class="listen-left">0:00</span></div>
-<button class="listen-speed" type="button" aria-label="Speed: 1 times">1×</button>
+<div class="listen-rate">
+<button class="listen-speed" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Speed: 1 times">1×</button>
+<div class="listen-speeds" role="menu" aria-label="Speed" hidden>
+<button type="button" role="menuitemradio" data-speed="0.75">0.75×</button>
+<button type="button" role="menuitemradio" data-speed="1">1×</button>
+<button type="button" role="menuitemradio" data-speed="1.25">1.25×</button>
+<button type="button" role="menuitemradio" data-speed="1.5">1.5×</button>
+<button type="button" role="menuitemradio" data-speed="1.75">1.75×</button>
+<button type="button" role="menuitemradio" data-speed="2">2×</button>
+</div>
+</div>
 <button class="listen-close" type="button" aria-label="Close the player"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>
 <p class="listen-note" hidden>This episode won’t play here. <a href="">Open it</a></p>
 </section>
@@ -1033,7 +1043,8 @@ INDEX_JS = """
   const toggle = bar_.querySelector(".listen-toggle");
   const speedButton = bar_.querySelector(".listen-speed");
   const listenNote = bar_.querySelector(".listen-note");
-  const SPEEDS = [1, 1.25, 1.5, 2];
+  const speedMenu = bar_.querySelector(".listen-speeds");
+  const SPEEDS = [...speedMenu.querySelectorAll("[data-speed]")].map(item => +item.dataset.speed);
   let speed = 1, positions = {}, current = null, seeking = false;
   try { speed = SPEEDS.includes(+localStorage.getItem("listen-speed")) ? +localStorage.getItem("listen-speed") : 1; } catch (error) {}
   try { positions = JSON.parse(localStorage.getItem("listen-positions") || "{}"); } catch (error) {}
@@ -1047,6 +1058,7 @@ INDEX_JS = """
     listen.playbackRate = speed;
     speedButton.textContent = speed + "×";
     speedButton.setAttribute("aria-label", "Speed: " + speed + " times");
+    for (const item of speedMenu.querySelectorAll("[data-speed]")) item.setAttribute("aria-checked", +item.dataset.speed === speed);
   };
   const showTime = () => {
     const length = listen.duration;
@@ -1103,10 +1115,33 @@ INDEX_JS = """
   toggle.addEventListener("click", () => listen.paused ? listen.play().catch(() => {}) : listen.pause());
   bar_.querySelector(".listen-back").addEventListener("click", () => skip(-15));
   bar_.querySelector(".listen-ahead").addEventListener("click", () => skip(30));
-  speedButton.addEventListener("click", () => {
-    speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length];
+  // Its speed, from a little menu over the button: each speed, the one it's at ticked. It closes on a choice, a
+  // press anywhere else, or Esc, which gives the button back the keyboard.
+  const openSpeeds = open => {
+    speedMenu.hidden = !open;
+    speedButton.setAttribute("aria-expanded", open);
+    if (open) (speedMenu.querySelector('[aria-checked="true"]') || speedMenu.querySelector("[data-speed]")).focus();
+  };
+  speedButton.addEventListener("click", () => openSpeeds(speedMenu.hidden));
+  speedMenu.addEventListener("click", event => {
+    const item = event.target.closest("[data-speed]");
+    if (!item) return;
+    speed = +item.dataset.speed;
     showSpeed();
     try { localStorage.setItem("listen-speed", speed); } catch (error) {}
+    openSpeeds(false);
+    speedButton.focus();
+  });
+  speedMenu.addEventListener("keydown", event => {
+    const items = [...speedMenu.querySelectorAll("[data-speed]")], at = items.indexOf(document.activeElement);
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      items[(at + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length].focus();
+    }
+    if (event.key === "Escape") { event.stopPropagation(); openSpeeds(false); speedButton.focus(); }
+  });
+  document.addEventListener("click", event => {
+    if (!speedMenu.hidden && !event.target.closest(".listen-rate")) openSpeeds(false);
   });
   range.addEventListener("input", () => {
     seeking = true;
@@ -1771,6 +1806,18 @@ CSS = """
   .listen-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(167, 139, 250, .5); }
   .listen-speed { min-width: 2.75rem; height: 1.75rem; padding: 0 .4rem !important; border: 1px solid #2a2a2a !important;
                   border-radius: 999px; font-size: .8rem !important; font-variant-numeric: tabular-nums; }
+  /* The speeds, in a little menu that opens up from the button, over the list: the one it's at ticked. */
+  .listen-rate { position: relative; display: grid; }
+  .listen-speeds { position: absolute; right: 50%; bottom: calc(100% + .6rem); z-index: 1; display: grid; min-width: 6.5rem;
+                   padding: .3rem; transform: translateX(50%); border: 1px solid #2a2a2a; border-radius: 12px;
+                   background: #161616; box-shadow: 0 10px 30px rgba(0, 0, 0, .6); }
+  .listen-speeds[hidden] { display: none; }
+  .listen .listen-speeds button { display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+                                  padding: .5rem .7rem; border-radius: 8px; color: #bbb; font-size: .9rem;
+                                  font-variant-numeric: tabular-nums; }
+  .listen .listen-speeds button:hover, .listen .listen-speeds button:focus-visible { background: #222; color: #fff; }
+  .listen .listen-speeds [aria-checked="true"] { color: #fff; font-weight: 600; }
+  .listen-speeds [aria-checked="true"]::after { content: "✓"; color: var(--podcast); font-weight: 400; }
   .listen-close { width: 2rem; height: 2rem; }
   .listen-close svg { width: .9rem; height: .9rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
   .listen-note { grid-column: 1 / -1; margin: 0; color: #aaa; font-size: .85rem; }
@@ -1798,7 +1845,11 @@ CSS = """
     .listen-back svg, .listen-ahead svg { width: 1.9rem; height: 1.9rem; }
     .listen-toggle { width: 3.6rem; height: 3.6rem; }
     .listen-toggle svg { width: 1.5rem; height: 1.5rem; }
-    .listen-speed { grid-area: speed; justify-self: start; min-width: 3.25rem; height: 2.25rem; font-size: .9rem !important; }
+    .listen-rate { grid-area: speed; justify-self: start; }
+    .listen-speed { min-width: 3.25rem; height: 2.25rem; font-size: .9rem !important; }
+    /* At the bar's left edge, its menu opens from the button's own left edge, not over its middle. */
+    .listen-speeds { left: 0; right: auto; transform: none; min-width: 7.5rem; }
+    .listen .listen-speeds button { padding: .65rem .8rem; font-size: 1rem; }
   }
   @media (prefers-reduced-motion: no-preference) { .listen:not([hidden]) { animation: listen-in .2s ease-out; } }
   @keyframes listen-in { from { transform: translateY(100%); } }
