@@ -132,3 +132,4 @@ https://www.youtube.com/feeds/videos.xml?channel_id=UCy0tKL1T7wFoYcxCe0xjN6Q   T
 https://www.theverge.com/ The Verge
 https://www.slowboring.com/ Slow Boring
 https://www.joshwcomeau.com Josh Comeau
+https://www.hyperdimensional.co/ Hyperdimensional
