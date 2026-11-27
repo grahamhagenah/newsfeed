@@ -1749,13 +1749,13 @@ CSS = """
   li { padding: .45rem 0; }
   /* A headline a size up from the page's text, easy to read down a long list, and its kind's mark big enough
      to tell at a glance. */
-  .posts .headline .title { font-size: 1.1875rem; }
+  .posts .headline .title { font-size: 1.0625rem; }
   .posts > .row > .icon { width: 15px; height: 15px; }
   @media (max-width: 34rem) {
     .posts > li { padding-top: .65rem; padding-bottom: .65rem; }
-    .posts .headline .title { font-size: 1.25rem; }
+    .posts .headline .title { font-size: 1.125rem; }
     /* The icon beside the middle of the larger headline's first line. */
-    .posts > .row > .icon { width: 16px; height: 16px; top: calc(.65rem + .89rem - 8px); }
+    .posts > .row > .icon { width: 16px; height: 16px; top: calc(.65rem + .82rem - 8px); }
     .posts > .row { padding-left: calc(16px + .7em); }
   }
   ol { padding-left: 1.25rem; }
