@@ -42,8 +42,8 @@ https://ourworldindata.org/     Our World in Data   days=30
 https://aeon.co/feed.rss   Aeon   days=7
 https://asteriskmag.com/   Asterisk   days=30
 # Only frontpage posts with 45 karma or more, LessWrong's own cutoff for its better posts; its plain feed is
-# everything posted, a dozen or more a day.
-https://www.lesswrong.com/feed.xml?view=frontpage-rss&karmaThreshold=45   LessWrong   limit=6
+# everything posted, a dozen or more a day. Up to a dozen from the last five days.
+https://www.lesswrong.com/feed.xml?view=frontpage-rss&karmaThreshold=45   LessWrong   days=5   limit=12
 
 # Energy, EVs and cities
 https://insideevs.com/          InsideEVs
